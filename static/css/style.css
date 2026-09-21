@@ -1,0 +1,9 @@
+/* Custom CSS for School Homework System */
+/* Custom animations & scrollbar utilities */
+.scrollbar-none::-webkit-scrollbar {
+    display: none;
+}
+.scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}

@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Audit Jurnali — Admin{% endblock %}
+
+{% block content %}
+{% include 'components/admin_nav.html' %}
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+
+    <!-- Header -->
+    <div>
+        <h1 class="text-2xl font-black text-gray-900 dark:text-white flex items-center">
+            <i data-lucide="shield-check" class="w-6 h-6 mr-2 text-brand-600"></i>
+            Tizim Harakatlari Jurnali (Audit Log)
+        </h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+            Adminlar va o‘quvchilar tomonidan bajarilgan barcha muhim amallar xronologiyasi
+        </p>
+    </div>
+
+    <!-- Logs Table -->
+    <div class="bg-white dark:bg-gray-800 rounded-3xl border border-gray-200 dark:border-gray-700 shadow-xs overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-gray-600 dark:text-gray-300">
+                <thead class="bg-gray-50 dark:bg-gray-700/50 text-xs uppercase font-bold text-gray-700 dark:text-gray-200">
+                    <tr>
+                        <th class="px-6 py-4">Vaqti</th>
+                        <th class="px-6 py-4">Foydalanuvchi</th>
+                        <th class="px-6 py-4">Bajarilgan amal</th>
+                        <th class="px-6 py-4">Model / Obyekt</th>
+                        <th class="px-6 py-4">IP manzil</th>
+                        <th class="px-6 py-4">Tafsilotlar</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-700/60 font-mono text-xs">
+                    {% for log in logs %}
+                    <tr class="hover:bg-gray-50/80 dark:hover:bg-gray-700/30 transition-colors">
+                        <td class="px-6 py-3.5 whitespace-nowrap text-gray-500">
+                            {{ log.timestamp|date:"d.m.Y H:i:s" }}
+                        </td>
+                        <td class="px-6 py-3.5 font-bold text-gray-800 dark:text-gray-200 whitespace-nowrap">
+                            {{ log.user.username|default:"Tizim / Anonim" }}
+                        </td>
+                        <td class="px-6 py-3.5 font-sans font-semibold text-gray-900 dark:text-white whitespace-nowrap">
+                            {{ log.action }}
+                        </td>
+                        <td class="px-6 py-3.5 whitespace-nowrap">
+                            <span class="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                                {{ log.target_model|default:"—" }} {% if log.target_id %}#{{ log.target_id }}{% endif %}
+                            </span>
+                        </td>
+                        <td class="px-6 py-3.5 text-gray-400 whitespace-nowrap">
+                            {{ log.ip_address|default:"127.0.0.1" }}
+                        </td>
+                        <td class="px-6 py-3.5 text-gray-500 max-w-sm truncate font-sans">
+                            {{ log.details|default:"—" }}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center text-gray-400 text-sm font-sans">
+                            Audit yozuvlari mavjud emas.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,278 @@
+{% extends 'base.html' %}
+
+{% block title %}Hisobotlar va Excel Eksport — Admin{% endblock %}
+
+{% block content %}
+{% include 'components/admin_nav.html' %}
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-black text-gray-900 dark:text-white flex items-center">
+                <i data-lucide="file-spreadsheet" class="w-6 h-6 mr-2 text-emerald-600"></i>
+                Hisobotlar va Excel Eksport
+            </h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                Istalgan sinf, o‘quvchi va sana oralig‘i bo‘yicha ko‘rish va 6 varaqli mukammal Excel hisobotini yuklab olish
+            </p>
+        </div>
+    </div>
+
+    <!-- Filter & Generator Form Card -->
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-200 dark:border-gray-700 shadow-sm space-y-5">
+        <form id="reportFilterForm" method="GET" action="{% url 'admin_reports' %}" class="space-y-4">
+
+            <!-- 1. Report Type Selector -->
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
+                    Hisobot turi
+                </label>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <label class="flex items-center p-3.5 rounded-2xl border cursor-pointer transition-all
+                        {% if report_type == 'all' %}bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 ring-2 ring-emerald-500/20{% else %}border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50{% endif %}">
+                        <input type="radio" name="report_type" value="all" {% if report_type == 'all' %}checked{% endif %} class="text-emerald-600 focus:ring-emerald-500" onchange="handleReportTypeChange(this.value)">
+                        <span class="ml-2.5 text-xs sm:text-sm font-bold text-gray-800 dark:text-gray-200">
+                            Barcha sinflar hisoboti
+                        </span>
+                    </label>
+
+                    <label class="flex items-center p-3.5 rounded-2xl border cursor-pointer transition-all
+                        {% if report_type == 'single_class' %}bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 ring-2 ring-emerald-500/20{% else %}border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50{% endif %}">
+                        <input type="radio" name="report_type" value="single_class" {% if report_type == 'single_class' %}checked{% endif %} class="text-emerald-600 focus:ring-emerald-500" onchange="handleReportTypeChange(this.value)">
+                        <span class="ml-2.5 text-xs sm:text-sm font-bold text-gray-800 dark:text-gray-200">
+                            Bitta sinf hisoboti
+                        </span>
+                    </label>
+
+                    <label class="flex items-center p-3.5 rounded-2xl border cursor-pointer transition-all
+                        {% if report_type == 'single_student' %}bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 ring-2 ring-emerald-500/20{% else %}border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50{% endif %}">
+                        <input type="radio" name="report_type" value="single_student" {% if report_type == 'single_student' %}checked{% endif %} class="text-emerald-600 focus:ring-emerald-500" onchange="handleReportTypeChange(this.value)">
+                        <span class="ml-2.5 text-xs sm:text-sm font-bold text-gray-800 dark:text-gray-200">
+                            Bitta o‘quvchi hisoboti
+                        </span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Filter Fields Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 pt-2">
+                <!-- Classroom -->
+                <div id="classSelectDiv">
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Sinfni tanlang</label>
+                    <select id="classroomSelect" name="classroom_id" onchange="onClassroomChanged(this.value)" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        <option value="">— Barcha sinflar —</option>
+                        {% for c in classrooms %}
+                            <option value="{{ c.id }}" {% if classroom_id == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Student (dynamic) -->
+                <div id="studentSelectDiv" class="{% if report_type != 'single_student' %}opacity-50 pointer-events-none{% endif %}">
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">O‘quvchini tanlang</label>
+                    <select id="studentSelect" name="student_id" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        <option value="">— O‘quvchini tanlang —</option>
+                        {% for st in students %}
+                            <option value="{{ st.id }}" {% if student_id == st.id|stringformat:"s" %}selected{% endif %}>{{ st.full_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Subject -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Fan</label>
+                    <select name="subject_id" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        <option value="">— Barcha fanlar —</option>
+                        {% for s in subjects %}
+                            <option value="{{ s.id }}" {% if subject_id == s.id|stringformat:"s" %}selected{% endif %}>{{ s.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Status Filter -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Vazifa holati</label>
+                    <select name="status" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        <option value="all">Barchasi</option>
+                        <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Bajarildi</option>
+                        <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Qabul qilindi</option>
+                        <option value="submitted" {% if status_filter == 'submitted' %}selected{% endif %}>Javob yuborildi</option>
+                        <option value="under_review" {% if status_filter == 'under_review' %}selected{% endif %}>Tekshirilmoqda</option>
+                        <option value="needs_work" {% if status_filter == 'needs_work' %}selected{% endif %}>Qayta ishlash kerak</option>
+                        <option value="not_started" {% if status_filter == 'not_started' %}selected{% endif %}>Bajarilmagan</option>
+                        <option value="overdue" {% if status_filter == 'overdue' %}selected{% endif %}>Muddati o‘tgan</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Date range grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Boshlanish sanasi</label>
+                    <input type="date" name="start_date" value="{{ start_date }}" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Tugash sanasi</label>
+                    <input type="date" name="end_date" value="{{ end_date }}" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="pt-4 border-t border-gray-100 dark:border-gray-700 flex flex-wrap items-center justify-end gap-3">
+                <button type="submit" class="inline-flex items-center px-5 py-2.5 rounded-xl text-sm font-bold text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                    <i data-lucide="eye" class="w-4 h-4 mr-2"></i>
+                    Ekranda ko‘rish
+                </button>
+
+                <button type="button" onclick="downloadExcel()" class="inline-flex items-center px-6 py-2.5 rounded-xl text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-600/20 transition-all">
+                    <i data-lucide="download" class="w-4 h-4 mr-2"></i>
+                    Excelga yuklab olish (.xlsx)
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- On-screen Preview Metrics -->
+    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <div class="p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 text-center">
+            <span class="text-xs text-gray-400">Jami o‘quvchilar</span>
+            <p class="text-2xl font-black text-gray-900 dark:text-white mt-1">{{ distinct_students }}</p>
+        </div>
+        <div class="p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 text-center">
+            <span class="text-xs text-gray-400">Jami vazifalar</span>
+            <p class="text-2xl font-black text-gray-900 dark:text-white mt-1">{{ total_records }}</p>
+        </div>
+        <div class="p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 text-center">
+            <span class="text-xs text-gray-400">Bajarilgan</span>
+            <p class="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">{{ completed_count }}</p>
+        </div>
+        <div class="p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 text-center">
+            <span class="text-xs text-gray-400">Bajarilmagan</span>
+            <p class="text-2xl font-black text-rose-600 dark:text-rose-400 mt-1">{{ not_completed_count }}</p>
+        </div>
+        <div class="p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 text-center col-span-2 sm:col-span-1">
+            <span class="text-xs text-gray-400">Bajarish foizi</span>
+            <p class="text-2xl font-black text-brand-600 dark:text-brand-400 mt-1">{{ completion_rate }}</p>
+        </div>
+    </div>
+
+    <!-- Excel 6-Sheet Structure Info Callout -->
+    <div class="p-4 bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-2xl flex items-start space-x-3 text-xs text-emerald-900 dark:text-emerald-200">
+        <i data-lucide="sparkles" class="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5"></i>
+        <div>
+            <span class="font-bold">Eksport qilinadigan Excel fayli quyidagi 6 ta maxsus varaqni o‘z ichiga oladi:</span>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2 font-medium">
+                <span>1. Umumiy hisobot</span>
+                <span>2. O‘quvchilar statistikasi</span>
+                <span>3. Vazifalar batafsil</span>
+                <span>4. Bajarilgan vazifalar</span>
+                <span>5. Bajarilmagan vazifalar</span>
+                <span>6. Fayllar va topshiriqlar</span>
+            </div>
+            <p class="mt-1 text-emerald-700 dark:text-emerald-400 text-[11px]">
+                * Barcha ustunlar avtomatik kengaytirilgan, sarlavha muzlatilgan, rangli indikatorlar va formulalar kiritilgan.
+            </p>
+        </div>
+    </div>
+
+    <!-- Preview Table -->
+    <div class="bg-white dark:bg-gray-800 rounded-3xl border border-gray-200 dark:border-gray-700 shadow-xs overflow-hidden">
+        <div class="p-5 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+            <h3 class="text-base font-bold text-gray-900 dark:text-white flex items-center">
+                <i data-lucide="table" class="w-4 h-4 mr-2 text-brand-600"></i>
+                Hisobot natijasi (Dastlabki ko‘rish)
+            </h3>
+            <span class="text-xs text-gray-400">Topildi: {{ total_records }} ta yozuv</span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-gray-600 dark:text-gray-300">
+                <thead class="bg-gray-50 dark:bg-gray-700/50 text-[11px] uppercase font-bold text-gray-700 dark:text-gray-200">
+                    <tr>
+                        <th class="px-5 py-3">№</th>
+                        <th class="px-5 py-3">O‘quvchi</th>
+                        <th class="px-5 py-3">Sinf</th>
+                        <th class="px-5 py-3">Fan</th>
+                        <th class="px-5 py-3">Vazifa</th>
+                        <th class="px-5 py-3">Berildi</th>
+                        <th class="px-5 py-3">Muddat</th>
+                        <th class="px-5 py-3">Holat</th>
+                        <th class="px-5 py-3">Bajarilgan vaqt</th>
+                        <th class="px-5 py-3">O‘qituvchi xulosasi</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-700/60">
+                    {% for r in preview_records %}
+                    <tr class="hover:bg-gray-50/80 dark:hover:bg-gray-700/30">
+                        <td class="px-5 py-3 text-gray-400">{{ forloop.counter }}</td>
+                        <td class="px-5 py-3 font-bold text-gray-900 dark:text-white whitespace-nowrap">{{ r.student.full_name }}</td>
+                        <td class="px-5 py-3 whitespace-nowrap">{{ r.student.classroom.name|default:"-" }}</td>
+                        <td class="px-5 py-3 whitespace-nowrap">{{ r.assignment.subject.name }}</td>
+                        <td class="px-5 py-3 font-medium text-gray-800 dark:text-gray-200 max-w-xs truncate">{{ r.assignment.title }}</td>
+                        <td class="px-5 py-3 whitespace-nowrap">{{ r.assignment.assigned_date|date:"d.m.Y" }}</td>
+                        <td class="px-5 py-3 whitespace-nowrap">{{ r.assignment.due_date|date:"d.m.Y H:i" }}</td>
+                        <td class="px-5 py-3 whitespace-nowrap">
+                            <span class="px-2 py-0.5 rounded-md text-[11px] font-bold border {{ r.badge_color }}">
+                                {{ r.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="px-5 py-3 whitespace-nowrap text-gray-500">
+                            {{ r.marked_done_at|date:"d.m.Y H:i"|default:"—" }}
+                        </td>
+                        <td class="px-5 py-3 whitespace-nowrap">
+                            {{ r.submission.get_review_status_display|default:"—" }}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="10" class="px-6 py-12 text-center text-gray-400 text-sm">
+                            Tanlangan parametrlar bo‘yicha ma’lumot topilmadi.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function handleReportTypeChange(val) {
+        const studentDiv = document.getElementById('studentSelectDiv');
+        const studentSelect = document.getElementById('studentSelect');
+        if (val === 'single_student') {
+            studentDiv.classList.remove('opacity-50', 'pointer-events-none');
+        } else {
+            studentDiv.classList.add('opacity-50', 'pointer-events-none');
+            studentSelect.value = '';
+        }
+    }
+
+    function onClassroomChanged(classId) {
+        // Fetch students of this classroom via AJAX
+        const studentSelect = document.getElementById('studentSelect');
+        fetch(`{% url 'admin_get_students_ajax' %}?classroom_id=${classId}`)
+            .then(res => res.json())
+            .then(data => {
+                studentSelect.innerHTML = '<option value="">— O‘quvchini tanlang —</option>';
+                data.students.forEach(st => {
+                    const opt = document.createElement('option');
+                    opt.value = st.id;
+                    opt.textContent = st.name;
+                    studentSelect.appendChild(opt);
+                });
+            });
+    }
+
+    function downloadExcel() {
+        const form = document.getElementById('reportFilterForm');
+        const params = new URLSearchParams(new FormData(form)).toString();
+        window.location.href = `{% url 'admin_export_excel' %}?${params}`;
+    }
+</script>
+{% endblock %}

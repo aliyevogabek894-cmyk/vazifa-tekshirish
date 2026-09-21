@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}Profilim — Maktab Uy Vazifalari{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+
+    <!-- Profile Header Card -->
+    <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 border border-gray-200 dark:border-gray-700 shadow-sm text-center">
+        <div class="w-24 h-24 mx-auto rounded-full bg-gradient-to-tr from-brand-600 to-indigo-600 text-white flex items-center justify-center text-3xl font-black shadow-lg shadow-brand-500/20 mb-4 overflow-hidden">
+            {% if student.avatar %}
+                <img src="{{ student.avatar.url }}" alt="{{ student.full_name }}" class="w-full h-full object-cover">
+            {% else %}
+                {{ student.first_name|slice:":1" }}
+            {% endif %}
+        </div>
+
+        <h1 class="text-2xl font-black text-gray-900 dark:text-white">{{ student.full_name }}</h1>
+        <p class="text-sm font-semibold text-brand-600 dark:text-brand-400 mt-1">
+            {{ student.classroom.name|default:"Sinf belgilanmagan" }}
+        </p>
+        <p class="text-xs text-gray-400 mt-1 font-mono">
+            {{ student.phone_number }}
+        </p>
+
+        <div class="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700 grid grid-cols-2 gap-4 text-center">
+            <div>
+                <span class="text-xs text-gray-400">Ro‘yxatdan o‘tgan</span>
+                <p class="text-sm font-bold text-gray-800 dark:text-gray-200 mt-0.5">{{ student.created_at|date:"d.m.Y" }}</p>
+            </div>
+            <div>
+                <span class="text-xs text-gray-400">Holat</span>
+                <p class="text-sm font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">Faol o‘quvchi</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Request Change Info Form -->
+    <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 border border-gray-200 dark:border-gray-700 shadow-sm space-y-4">
+        <div class="flex items-center space-x-2">
+            <i data-lucide="edit-3" class="w-5 h-5 text-brand-600"></i>
+            <h2 class="text-lg font-bold text-gray-900 dark:text-white">Ma’lumotlarni o‘zgartirish so‘rovi</h2>
+        </div>
+        <p class="text-xs text-gray-500 dark:text-gray-400">
+            Ism, familiya yoki sinfingiz noto‘g‘ri bo‘lsa, adminga o‘zgartirish so‘rovini yuborishingiz mumkin.
+        </p>
+
+        <form method="POST" action="" class="space-y-4 pt-2">
+            {% csrf_token %}
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Yangi ism</label>
+                    <input type="text" name="first_name" value="{{ student.first_name }}" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Yangi familiya</label>
+                    <input type="text" name="last_name" value="{{ student.last_name }}" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Sinfni o‘zgartirish</label>
+                <select name="classroom_id" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                    {% for c in classrooms %}
+                        <option value="{{ c.id }}" {% if student.classroom and student.classroom.id == c.id %}selected{% endif %}>{{ c.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit" class="w-full py-3 px-4 rounded-xl text-sm font-bold text-white bg-brand-600 hover:bg-brand-700 shadow-md transition-all">
+                So‘rovni yuborish
+            </button>
+        </form>
+    </div>
+
+</div>
+{% endblock %}

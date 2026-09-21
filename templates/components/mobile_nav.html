@@ -1,0 +1,16 @@
+<nav class="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-t border-gray-200 dark:border-gray-700 shadow-lg">
+    <div class="grid grid-cols-3 h-16 max-w-lg mx-auto">
+        <a href="{% url 'student_dashboard' %}" class="flex flex-col items-center justify-center text-xs font-medium text-brand-600 dark:text-brand-400 hover:text-brand-700">
+            <i data-lucide="layout-dashboard" class="w-5 h-5 mb-1"></i>
+            <span>Vazifalar</span>
+        </a>
+        <a href="{% url 'student_profile' %}" class="flex flex-col items-center justify-center text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-brand-600">
+            <i data-lucide="user" class="w-5 h-5 mb-1"></i>
+            <span>Profilim</span>
+        </a>
+        <a href="{% url 'logout' %}" class="flex flex-col items-center justify-center text-xs font-medium text-rose-500 hover:text-rose-600">
+            <i data-lucide="log-out" class="w-5 h-5 mb-1"></i>
+            <span>Chiqish</span>
+        </a>
+    </div>
+</nav>

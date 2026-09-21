@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block title %}Sinflar Boshqaruvi — Admin{% endblock %}
+
+{% block content %}
+{% include 'components/admin_nav.html' %}
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-black text-gray-900 dark:text-white">Sinflar boshqaruvi</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Maktabdagi barcha sinflar va ularning o‘quvchilar soni</p>
+        </div>
+        <button onclick="document.getElementById('createClassModal').classList.remove('hidden')" class="inline-flex items-center px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-brand-600 hover:bg-brand-700 shadow-md transition-all">
+            <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
+            Yangi sinf qo‘shish
+        </button>
+    </div>
+
+    <!-- Classrooms Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {% for c in classrooms %}
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-200 dark:border-gray-700 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between">
+                    <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-50 dark:bg-blue-950/60 text-brand-700 dark:text-brand-300">
+                        {{ c.grade_level }}-bosqich
+                    </span>
+                    <form method="POST" action="" onsubmit="return confirm('Haqiqatdan ham {{ c.name }} sinfini o‘chirmoqchimisiz?');">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete">
+                        <input type="hidden" name="classroom_id" value="{{ c.id }}">
+                        <button type="submit" class="text-gray-400 hover:text-rose-500 p-1" title="Sinfni o‘chirish">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </form>
+                </div>
+
+                <h3 class="text-2xl font-black text-gray-900 dark:text-white mt-3">{{ c.name }}</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">O‘quv yili: {{ c.academic_year }}</p>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                <span class="text-xs font-medium text-gray-500 dark:text-gray-400">O‘quvchilar:</span>
+                <a href="{% url 'admin_students' %}?classroom_id={{ c.id }}" class="text-sm font-bold text-brand-600 dark:text-brand-400 hover:underline flex items-center">
+                    {{ c.students_total }} nafar <i data-lucide="arrow-right" class="w-3.5 h-3.5 ml-1"></i>
+                </a>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full py-12 text-center text-gray-400 bg-white dark:bg-gray-800 rounded-3xl border border-gray-200 dark:border-gray-700">
+            Hozircha sinflar kiritilmagan.
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Create Classroom Modal -->
+    <div id="createClassModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-700 mb-4">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Yangi sinf yaratish</h3>
+                <button type="button" onclick="document.getElementById('createClassModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form method="POST" action="" class="space-y-4">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create">
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Sinf nomi (Masalan: 4-A)</label>
+                    {{ form.name }}
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Sinf bosqichi (1-11 raqam)</label>
+                    {{ form.grade_level }}
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">O‘quv yili</label>
+                    {{ form.academic_year }}
+                </div>
+
+                <div class="flex items-center space-x-2 pt-2">
+                    {{ form.is_active }}
+                    <label class="text-xs font-medium text-gray-700 dark:text-gray-300">Faol holatda</label>
+                </div>
+
+                <div class="pt-4 flex justify-end space-x-2">
+                    <button type="button" onclick="document.getElementById('createClassModal').classList.add('hidden')" class="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700">
+                        Bekor qilish
+                    </button>
+                    <button type="submit" class="px-5 py-2 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 shadow-md">
+                        Saqlash
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

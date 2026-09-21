@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Kirish — Maktab Uy Vazifalari{% endblock %}
+
+{% block content %}
+<div class="min-h-[80vh] flex flex-col justify-center items-center px-4 sm:px-6 lg:px-8 py-12">
+    <div class="w-full max-w-md bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <div class="mx-auto w-16 h-16 bg-slate-900 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-slate-900/30 mb-4">
+                <i data-lucide="shield-check" class="w-8 h-8 text-amber-400"></i>
+            </div>
+            <h2 class="text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight">O‘qituvchi / Admin</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                Boshqaruv paneliga kirish uchun login va parolingizni kiriting.
+            </p>
+        </div>
+
+        <!-- Login Form -->
+        <form method="POST" action="{% url 'admin_login' %}" class="space-y-5">
+            {% csrf_token %}
+            <div>
+                <label for="username" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    Foydalanuvchi nomi (Login)
+                </label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                        <i data-lucide="user" class="w-5 h-5"></i>
+                    </div>
+                    <input 
+                        type="text" 
+                        id="username" 
+                        name="username" 
+                        required 
+                        placeholder="admin" 
+                        class="w-full pl-12 pr-4 py-3 rounded-2xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white text-base focus:ring-2 focus:ring-slate-900 dark:focus:ring-slate-400 focus:outline-none transition-all"
+                    >
+                </div>
+            </div>
+
+            <div>
+                <label for="password" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    Parol
+                </label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                        <i data-lucide="lock" class="w-5 h-5"></i>
+                    </div>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        required 
+                        placeholder="••••••••" 
+                        class="w-full pl-12 pr-4 py-3 rounded-2xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white text-base focus:ring-2 focus:ring-slate-900 dark:focus:ring-slate-400 focus:outline-none transition-all"
+                    >
+                </div>
+            </div>
+
+            <button 
+                type="submit" 
+                class="w-full flex items-center justify-center py-4 px-6 rounded-2xl text-white bg-slate-900 hover:bg-slate-800 dark:bg-brand-600 dark:hover:bg-brand-700 focus:ring-4 focus:ring-slate-900/30 text-base font-bold shadow-lg shadow-slate-900/20 hover:shadow-xl transition-all duration-200"
+            >
+                <i data-lucide="log-in" class="w-5 h-5 mr-2"></i>
+                <span>Tizimga kirish</span>
+            </button>
+        </form>
+
+        <div class="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700 text-center">
+            <a href="{% url 'login' %}" class="inline-flex items-center text-sm font-semibold text-brand-600 dark:text-brand-400 hover:underline">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-1"></i>
+                O‘quvchi telefon logini sahifasiga qaytish
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

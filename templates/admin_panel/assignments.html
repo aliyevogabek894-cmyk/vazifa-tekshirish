@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+
+{% block title %}Uy Vazifalari Boshqaruvi — Admin{% endblock %}
+
+{% block content %}
+{% include 'components/admin_nav.html' %}
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+
+    <!-- Top header & buttons -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-black text-gray-900 dark:text-white">Uy vazifalari ro‘yxati</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Berilgan barcha topshiriqlar va ularning topshirish muddatlari</p>
+        </div>
+        <button onclick="document.getElementById('createAssignmentModal').classList.remove('hidden')" class="inline-flex items-center px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-brand-600 hover:bg-brand-700 shadow-md transition-all">
+            <i data-lucide="plus-circle" class="w-4 h-4 mr-2"></i>
+            Yangi vazifa yaratish
+        </button>
+    </div>
+
+    <!-- Assignments List -->
+    <div class="space-y-4">
+        {% for ass in assignments %}
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-200 dark:border-gray-700 shadow-xs hover:shadow-md transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="space-y-2 flex-1">
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-50 dark:bg-blue-950/60 text-brand-700 dark:text-brand-300">
+                        {{ ass.subject.name }}
+                    </span>
+                    {% for c in ass.classrooms.all %}
+                        <span class="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                            {{ c.name }}
+                        </span>
+                    {% endfor %}
+                    {% if ass.is_overdue %}
+                        <span class="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-rose-50 text-rose-600">
+                            Muddati o‘tgan
+                        </span>
+                    {% endif %}
+                </div>
+
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white">
+                    {{ ass.title }}
+                </h3>
+
+                {% if ass.description %}
+                <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">
+                    {{ ass.description }}
+                </p>
+                {% endif %}
+
+                <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-400">
+                    <span>Berildi: {{ ass.assigned_date|date:"d.m.Y" }}</span>
+                    <span>Muddat: <strong class="text-gray-700 dark:text-gray-300">{{ ass.due_date|date:"d.m.Y H:i" }}</strong></span>
+                    <span>O‘quvchilar: <strong>{{ ass.student_assignments.count }}</strong> ta biriktirilgan</span>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100 dark:border-gray-700">
+                <a href="{% url 'admin_submissions' %}?q={{ ass.title }}" class="inline-flex items-center px-3.5 py-2 rounded-xl text-xs font-bold text-brand-700 dark:text-brand-300 bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100">
+                    <i data-lucide="eye" class="w-4 h-4 mr-1.5"></i>
+                    Javoblarni ko‘rish
+                </a>
+
+                <form method="POST" action="" onsubmit="return confirm('Vazifani o‘chirishni xohlaysizmi?');">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete">
+                    <input type="hidden" name="assignment_id" value="{{ ass.id }}">
+                    <button type="submit" class="p-2 rounded-xl text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition-colors" title="O‘chirish">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% empty %}
+        <div class="p-12 text-center text-gray-400 bg-white dark:bg-gray-800 rounded-3xl border border-gray-200 dark:border-gray-700">
+            Hozircha uy vazifalari yaratilmagan.
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Modal: Create Assignment -->
+    <div id="createAssignmentModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-gray-200 dark:border-gray-700 my-8">
+            <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-700 mb-4">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Yangi uy vazifasi yaratish</h3>
+                <button type="button" onclick="document.getElementById('createAssignmentModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form method="POST" enctype="multipart/form-data" action="" class="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create">
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Vazifa mavzusi / Nomi *</label>
+                    {{ form.title }}
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Fan *</label>
+                        {{ form.subject }}
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Berilgan sana</label>
+                        {{ form.assigned_date }}
+                    </div>
+                </div>
+
+                <!-- Classrooms checkboxes -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                        Biriktiriladigan sinflar (bir yoki bir nechta tanlash mumkin):
+                    </label>
+                    <div class="grid grid-cols-3 sm:grid-cols-4 gap-2 p-3 bg-gray-50 dark:bg-gray-700/30 rounded-xl border border-gray-200 dark:border-gray-600">
+                        {{ form.classrooms }}
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Topshirish muddati (Sana va vaqt) *</label>
+                    {{ form.due_date }}
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Qisqacha tavsif</label>
+                    {{ form.description }}
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Vazifa to‘liq matni / misollar</label>
+                    {{ form.content }}
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Fayl biriktirish (PDF/Word/Rasm)</label>
+                        {{ form.attachment }}
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Video dars havolasi (ixtiyoriy)</label>
+                        {{ form.video_url }}
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-2 pt-2">
+                    {{ form.is_active }}
+                    <label class="text-xs font-medium text-gray-700 dark:text-gray-300">Faol holatda saqlash</label>
+                </div>
+
+                <div class="pt-4 flex justify-end space-x-2 border-t border-gray-100 dark:border-gray-700">
+                    <button type="button" onclick="document.getElementById('createAssignmentModal').classList.add('hidden')" class="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100">
+                        Bekor qilish
+                    </button>
+                    <button type="submit" class="px-5 py-2 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 shadow-md">
+                        Saqlash va topshirish
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

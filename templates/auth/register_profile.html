@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Profilni to‘ldirish — Maktab Uy Vazifalari{% endblock %}
+
+{% block content %}
+<div class="min-h-[85vh] flex flex-col justify-center items-center px-4 sm:px-6 lg:px-8 py-10">
+    <div class="w-full max-w-lg bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <div class="mx-auto w-16 h-16 bg-blue-100 dark:bg-blue-950/60 text-brand-600 dark:text-brand-400 rounded-2xl flex items-center justify-center mb-4">
+                <i data-lucide="user-plus" class="w-8 h-8"></i>
+            </div>
+            <h2 class="text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight">Profilni to‘ldirish</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                Telefon raqamingiz muvaffaqiyatli tasdiqlandi: <strong class="text-gray-800 dark:text-gray-200">{{ phone }}</strong>. Endi ma’lumotlaringizni kiriting.
+            </p>
+        </div>
+
+        <form method="POST" enctype="multipart/form-data" action="{% url 'register_profile' %}" class="space-y-5">
+            {% csrf_token %}
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Ismingiz *</label>
+                {{ form.first_name }}
+                {% if form.first_name.errors %}<p class="text-xs text-rose-500 mt-1">{{ form.first_name.errors.0 }}</p>{% endif %}
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Familiyangiz *</label>
+                {{ form.last_name }}
+                {% if form.last_name.errors %}<p class="text-xs text-rose-500 mt-1">{{ form.last_name.errors.0 }}</p>{% endif %}
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Sinfingiz *</label>
+                {{ form.classroom }}
+                {% if form.classroom.errors %}<p class="text-xs text-rose-500 mt-1">{{ form.classroom.errors.0 }}</p>{% endif %}
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Profil rasmi (ixtiyoriy)</label>
+                {{ form.avatar }}
+            </div>
+
+            <div class="pt-4">
+                <button 
+                    type="submit" 
+                    class="w-full flex items-center justify-center py-4 px-6 rounded-2xl text-white bg-brand-600 hover:bg-brand-700 focus:ring-4 focus:ring-brand-500/30 text-base font-bold shadow-lg shadow-brand-600/30 hover:shadow-xl transition-all duration-200"
+                >
+                    <span>Saqlash va tizimga kirish</span>
+                    <i data-lucide="check" class="w-5 h-5 ml-2"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
