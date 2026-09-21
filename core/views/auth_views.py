@@ -153,13 +153,30 @@ def admin_login_view(request):
                 login(request, user)
                 log_action(request, "Admin tizimga kirdi", "User", user.id)
                 messages.success(request, f"Xush kelibsiz, {user.first_name or user.username}!")
+                next_url = request.POST.get('next') or request.GET.get('next')
+                if next_url and next_url.startswith('/'):
+                    # Map old dashboard URLs if needed
+                    if '/dashboard/submissions' in next_url:
+                        return redirect('admin_submissions')
+                    elif '/dashboard/assignments' in next_url:
+                        return redirect('admin_assignments')
+                    elif '/dashboard/students' in next_url:
+                        return redirect('admin_students')
+                    elif '/dashboard/classrooms' in next_url:
+                        return redirect('admin_classrooms')
+                    elif '/dashboard/reports' in next_url:
+                        return redirect('admin_reports')
+                    elif '/dashboard' in next_url:
+                        return redirect('admin_dashboard')
+                    return redirect(next_url)
                 return redirect('admin_dashboard')
             else:
                 messages.error(request, "Ushbu profil administrator huquqiga ega emas.")
         else:
             messages.error(request, "Login yoki parol noto'g'ri!")
 
-    return render(request, 'auth/admin_login.html')
+    next_url = request.GET.get('next', '')
+    return render(request, 'auth/admin_login.html', {'next': next_url})
 
 
 def logout_view(request):
@@ -169,3 +186,15 @@ def logout_view(request):
     logout(request)
     messages.info(request, "Tizimdan muvaffaqiyatli chiqdingiz.")
     return redirect('login')
+
+
+def accounts_login_redirect(request):
+    """
+    Backwards compatibility redirect for old bookmark or cached URLs.
+    Redirects /accounts/login/ to /admin-login/ or /login/.
+    """
+    next_url = request.GET.get('next', '')
+    if 'dashboard' in next_url or 'admin' in next_url or 'submission' in next_url:
+        return redirect(f"/admin-login/?next={next_url}")
+    return redirect(f"/login/?next={next_url}")
+

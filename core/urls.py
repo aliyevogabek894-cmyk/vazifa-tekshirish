@@ -1,4 +1,5 @@
 from django.urls import path
+from django.shortcuts import redirect
 from core.views import auth_views, student_views, admin_views, reports_views, export_views, media_views
 
 urlpatterns = [
@@ -30,4 +31,14 @@ urlpatterns = [
     # Protected Media
     path('secure-media/submission/<int:attachment_id>/', media_views.secure_submission_media_view, name='secure_submission_media'),
     path('secure-media/assignment/<int:assignment_id>/', media_views.secure_assignment_media_view, name='secure_assignment_media'),
+
+    # Backwards compatibility redirects for old URLs
+    path('accounts/login/', auth_views.accounts_login_redirect, name='accounts_login_redirect'),
+    path('dashboard/', lambda r: redirect('admin_dashboard')),
+    path('dashboard/submissions/', lambda r: redirect('admin_submissions')),
+    path('dashboard/assignments/', lambda r: redirect('admin_assignments')),
+    path('dashboard/students/', lambda r: redirect('admin_students')),
+    path('dashboard/classrooms/', lambda r: redirect('admin_classrooms')),
+    path('dashboard/reports/', lambda r: redirect('admin_reports')),
 ]
+

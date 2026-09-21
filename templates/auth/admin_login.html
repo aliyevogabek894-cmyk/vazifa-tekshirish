@@ -19,6 +19,9 @@
         <!-- Login Form -->
         <form method="POST" action="{% url 'admin_login' %}" class="space-y-5">
             {% csrf_token %}
+            {% if next %}
+                <input type="hidden" name="next" value="{{ next }}">
+            {% endif %}
             <div>
                 <label for="username" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     Foydalanuvchi nomi (Login)
