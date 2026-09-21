@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: edutask-maktab
+    env: python
+    buildCommand: bash build.sh
+    startCommand: bash start.sh
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: DEBUG
+        value: "True"
+      - key: SECRET_KEY
+        generateValue: true
