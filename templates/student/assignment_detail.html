@@ -63,7 +63,7 @@
         <div class="pt-2">
             <a href="{% url 'secure_assignment_media' task.assignment.id %}" class="inline-flex items-center px-4 py-2.5 rounded-xl text-sm font-semibold text-brand-700 dark:text-brand-300 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 border border-blue-200 dark:border-blue-900 transition-colors">
                 <i data-lucide="file-down" class="w-4 h-4 mr-2"></i>
-                O‘qituvchi ilova qilgan faylni yuklab olish
+                O'qituvchi ilova qilgan faylni yuklab olish
             </a>
         </div>
         {% endif %}
@@ -73,7 +73,7 @@
             <div class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1.5">
                 <span class="flex items-center font-medium">
                     <i data-lucide="users" class="w-4 h-4 mr-1 text-gray-400"></i>
-                    Sinfdoshlaringiz faolligi: <strong>{{ class_completed_count }}</strong> / {{ total_class_students }} o‘quvchi bajardi
+                    Sinfdoshlaringiz faolligi: <strong>{{ class_completed_count }}</strong> / {{ total_class_students }} o'quvchi bajardi
                 </span>
                 <span class="font-bold text-brand-600 dark:text-brand-400">{{ class_percentage }}%</span>
             </div>
@@ -115,7 +115,7 @@
     <div class="bg-amber-50 dark:bg-amber-950/40 border-2 border-amber-300 dark:border-amber-700/60 rounded-3xl p-5 shadow-sm space-y-2">
         <div class="flex items-center space-x-2 text-amber-800 dark:text-amber-300 font-bold text-sm">
             <i data-lucide="message-square-quote" class="w-5 h-5 text-amber-600"></i>
-            <span>O‘qituvchi xulosasi va izohi:</span>
+            <span>O'qituvchi xulosasi va izohi:</span>
         </div>
         <p class="text-sm text-amber-900 dark:text-amber-200 whitespace-pre-line pl-7">
             {{ submission.teacher_feedback }}
@@ -126,169 +126,176 @@
     </div>
     {% endif %}
 
-    <!-- Answer Submission Card -->
+    <!-- ============================================================ -->
+    <!-- RASM YUBORISH QISMI — Asosiy oqim -->
+    <!-- ============================================================ -->
     <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm space-y-5">
         <div class="flex items-center justify-between">
             <div class="flex items-center space-x-2">
-                <i data-lucide="send" class="w-5 h-5 text-brand-600"></i>
-                <h2 class="text-lg font-bold text-gray-900 dark:text-white">Javob yuborish va rasm yuklash</h2>
+                <i data-lucide="camera" class="w-5 h-5 text-brand-600"></i>
+                <h2 class="text-lg font-bold text-gray-900 dark:text-white">Daftarni rasmga olib yuborish</h2>
             </div>
-            <span class="text-xs text-brand-700 dark:text-brand-300 font-medium bg-brand-50 dark:bg-brand-950/50 px-2.5 py-1 rounded-lg">
-                Daftarni rasmga oling
+            <span id="selectedCountBadge" class="text-xs font-bold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950/50 px-2.5 py-1 rounded-lg hidden">
+                0 ta rasm
             </span>
         </div>
 
-        <form method="POST" enctype="multipart/form-data" action="" id="submissionForm" onsubmit="return handleSubmissionSubmit(event)" class="space-y-5">
+        <!-- Bosqich 1: Rasm olish / tanlash -->
+        <div id="step1Section">
+            <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-3 flex items-center">
+                <span class="w-5 h-5 rounded-full bg-brand-600 text-white text-[10px] font-black flex items-center justify-center mr-2 flex-shrink-0">1</span>
+                Daftardagi vazifani rasmga oling yoki galereyadan tanlang:
+            </p>
+
+            <!-- Trigger inputs (hidden) -->
+            <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden">
+            <input type="file" id="galleryInput" multiple accept="image/*,.pdf,.doc,.docx,.txt" class="hidden">
+
+            <div class="grid grid-cols-2 gap-3">
+                <!-- Camera Button -->
+                <button
+                    type="button"
+                    id="cameraBtn"
+                    onclick="triggerCamera()"
+                    class="relative flex flex-col items-center justify-center p-5 rounded-2xl border-2 border-dashed border-brand-400 dark:border-brand-600 bg-brand-50/70 dark:bg-brand-950/30 hover:bg-brand-100 dark:hover:bg-brand-900/40 cursor-pointer transition-all active:scale-95 group"
+                >
+                    <div class="w-14 h-14 rounded-2xl bg-brand-600 text-white flex items-center justify-center shadow-lg shadow-brand-600/30 group-hover:scale-105 transition-transform mb-2">
+                        <i data-lucide="camera" class="w-7 h-7"></i>
+                    </div>
+                    <span class="text-sm font-bold text-brand-800 dark:text-brand-200">📸 Suratga olish</span>
+                    <span class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 text-center">Kamera orqali daftarni rasmga oling</span>
+                </button>
+
+                <!-- Gallery Button -->
+                <button
+                    type="button"
+                    id="galleryBtn"
+                    onclick="document.getElementById('galleryInput').click()"
+                    class="relative flex flex-col items-center justify-center p-5 rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/30 hover:bg-gray-100 dark:hover:bg-gray-700/50 cursor-pointer transition-all active:scale-95 group"
+                >
+                    <div class="w-14 h-14 rounded-2xl bg-gray-500 dark:bg-gray-600 text-white flex items-center justify-center shadow-md group-hover:scale-105 transition-transform mb-2">
+                        <i data-lucide="images" class="w-7 h-7"></i>
+                    </div>
+                    <span class="text-sm font-bold text-gray-800 dark:text-gray-200">🖼️ Galereyadan</span>
+                    <span class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 text-center">Telefoningizdan rasm tanlang</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- Bosqich 2: Tanlangan rasmlar PREVIEW (katta ko'rsatiladi) -->
+        <!-- ============================================================ -->
+        <div id="previewSection" class="hidden">
+            <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-3 flex items-center">
+                <span class="w-5 h-5 rounded-full bg-emerald-600 text-white text-[10px] font-black flex items-center justify-center mr-2 flex-shrink-0">2</span>
+                Tanlangan rasmlarni tekshiring (<span id="previewCountText">0</span> ta):
+                <button type="button" onclick="clearAllFiles()" class="ml-auto text-[11px] text-rose-500 hover:underline font-bold">Barchasini o'chirish</button>
+            </p>
+
+            <!-- Preview grid: katta thumbnails -->
+            <div id="previewGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3"></div>
+
+            <!-- Yana rasm qo'shish tugmasi -->
+            <button
+                type="button"
+                onclick="triggerCamera()"
+                class="w-full flex items-center justify-center py-2.5 rounded-xl border border-dashed border-brand-300 dark:border-brand-700 text-brand-600 dark:text-brand-400 text-xs font-bold hover:bg-brand-50 dark:hover:bg-brand-950/30 transition-colors"
+            >
+                <i data-lucide="plus-circle" class="w-4 h-4 mr-1.5"></i>
+                Yana rasm qo'shish
+            </button>
+        </div>
+
+        <!-- Error notice -->
+        <div id="errorNotice" class="hidden p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/50 text-rose-700 dark:text-rose-300 text-xs flex items-start">
+            <i data-lucide="alert-circle" class="w-4 h-4 mr-2 flex-shrink-0 mt-0.5 text-rose-600"></i>
+            <span id="errorText"></span>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- Bosqich 3: YUBORISH FORMASI -->
+        <!-- ============================================================ -->
+        <form method="POST" enctype="multipart/form-data" action="" id="submissionForm" onsubmit="return handleSubmit(event)" class="space-y-4 pt-2 border-t border-gray-100 dark:border-gray-700">
             {% csrf_token %}
             <input type="hidden" name="action_type" value="submit_work">
-
-            <!-- Real multi-file input submitted with form -->
+            <!-- Asosiy hidden file input (DataTransfer bilan to'ldiriladi) -->
             <input type="file" id="realFilesInput" name="files" multiple class="hidden">
 
-            <!-- Text Answer -->
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                    Matnli javob yoki izoh (ixtiyoriy)
-                </label>
-                <textarea 
-                    name="submission_text" 
-                    id="submissionTextInput"
-                    rows="3" 
-                    placeholder="Vazifa bo‘yicha yozgan javobingiz yoki o‘qituvchiga izoh..." 
-                    class="w-full px-4 py-3 rounded-2xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/40 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none placeholder:text-gray-400"
-                >{{ submission.submission_text }}</textarea>
-            </div>
+            <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 flex items-center">
+                <span class="w-5 h-5 rounded-full bg-gray-400 dark:bg-gray-600 text-white text-[10px] font-black flex items-center justify-center mr-2 flex-shrink-0" id="step3num">3</span>
+                Ixtiyoriy: O'qituvchiga matnli izoh yozing
+            </p>
 
-            <!-- Upload Options -->
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center justify-between">
-                    <span>Daftardagi vazifani rasmga olish / Fayl yuklash</span>
-                    <span id="selectedCountBadge" class="text-xs font-bold text-brand-600 dark:text-brand-400 hidden">
-                        0 ta fayl tanlandi
-                    </span>
-                </label>
+            <textarea
+                name="submission_text"
+                id="submissionTextInput"
+                rows="2"
+                placeholder="Masalan: 15-betni bajardim, 3-misol qiyin bo'ldi..."
+                class="w-full px-4 py-3 rounded-2xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/40 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none placeholder:text-gray-400"
+            >{{ submission.submission_text }}</textarea>
 
-                <!-- Hidden inputs for triggers -->
-                <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden" onchange="onFilesAdded(this.files, 'kamera')">
-                <input type="file" id="galleryInput" multiple accept="image/*,.pdf,.doc,.docx,.txt" class="hidden" onchange="onFilesAdded(this.files, 'galereya')">
-
-                <!-- Action buttons -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <!-- Camera Button (Mobile friendly) -->
-                    <button 
-                        type="button" 
-                        onclick="document.getElementById('cameraInput').click()" 
-                        class="relative flex items-center justify-center p-4 rounded-2xl border-2 border-dashed border-brand-400 dark:border-brand-600 bg-brand-50/70 dark:bg-brand-950/30 hover:bg-brand-100 dark:hover:bg-brand-900/40 cursor-pointer transition-all active:scale-[0.98] text-left group"
-                    >
-                        <div class="flex items-center space-x-3">
-                            <div class="w-12 h-12 rounded-xl bg-brand-600 text-white flex items-center justify-center shadow-md shadow-brand-600/30 group-hover:scale-105 transition-transform flex-shrink-0">
-                                <i data-lucide="camera" class="w-6 h-6"></i>
-                            </div>
-                            <div>
-                                <span class="text-sm font-bold text-brand-800 dark:text-brand-200 block">Kamera orqali suratga olish</span>
-                                <span class="text-xs text-gray-500 dark:text-gray-400 block mt-0.5">Daftarni rasmga oling (har bir sahifani)</span>
-                            </div>
-                        </div>
-                    </button>
-
-                    <!-- Gallery / Files Button -->
-                    <button 
-                        type="button" 
-                        onclick="document.getElementById('galleryInput').click()" 
-                        class="relative flex items-center justify-center p-4 rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/30 hover:bg-gray-100 dark:hover:bg-gray-700/50 cursor-pointer transition-all active:scale-[0.98] text-left group"
-                    >
-                        <div class="flex items-center space-x-3">
-                            <div class="w-12 h-12 rounded-xl bg-gray-600 text-white flex items-center justify-center shadow-md shadow-gray-600/20 group-hover:scale-105 transition-transform flex-shrink-0">
-                                <i data-lucide="images" class="w-6 h-6"></i>
-                            </div>
-                            <div>
-                                <span class="text-sm font-bold text-gray-800 dark:text-gray-200 block">Galereyadan tanlash</span>
-                                <span class="text-xs text-gray-500 dark:text-gray-400 block mt-0.5">Mavjud rasmlar yoki hujjatlar (PDF, Word)</span>
-                            </div>
-                        </div>
-                    </button>
-                </div>
-
-                <!-- Drag & Drop Zone for Desktop -->
-                <div 
-                    id="dropZone"
-                    ondragover="handleDragOver(event)" 
-                    ondragleave="handleDragLeave(event)" 
-                    ondrop="handleDrop(event)"
-                    onclick="document.getElementById('galleryInput').click()"
-                    class="mt-3 p-4 border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-brand-400 dark:hover:border-brand-500 rounded-2xl bg-gray-50/50 dark:bg-gray-800/40 text-center cursor-pointer transition-all hidden sm:block"
-                >
-                    <i data-lucide="upload-cloud" class="w-6 h-6 mx-auto text-gray-400 mb-1"></i>
-                    <p class="text-xs text-gray-600 dark:text-gray-300 font-medium">Yoki fayllarni shu yerga sudrab olib kelib tashlang</p>
-                </div>
-
-                <!-- Selected Files Preview Container -->
-                <div id="filePreviewList" class="mt-4 p-4 rounded-2xl bg-brand-50/40 dark:bg-brand-950/20 border border-brand-200 dark:border-brand-800/40 hidden">
-                    <div class="flex items-center justify-between mb-3">
-                        <p class="text-xs font-bold text-brand-900 dark:text-brand-200 flex items-center">
-                            <i data-lucide="check-circle-2" class="w-4 h-4 mr-1.5 text-emerald-600"></i>
-                            Yuboriladigan rasmlar va fayllar (<span id="previewCountText">0</span> ta):
-                        </p>
-                        <button type="button" onclick="clearAllSelectedFiles()" class="text-[11px] text-rose-600 hover:underline font-semibold">
-                            Barchasini tozalash
-                        </button>
-                    </div>
-                    <div id="fileThumbnails" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"></div>
-                </div>
-
-                <!-- Error notice banner -->
-                <div id="uploadErrorNotice" class="mt-3 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/50 text-rose-700 dark:text-rose-300 text-xs hidden flex items-center">
-                    <i data-lucide="alert-circle" class="w-4 h-4 mr-2 flex-shrink-0 text-rose-600"></i>
-                    <span id="uploadErrorNoticeText"></span>
-                </div>
-            </div>
-
-            <!-- Submit Button with loading state -->
-            <button 
-                type="submit" 
-                id="submitWorkButton"
-                class="w-full flex items-center justify-center py-3.5 px-6 rounded-2xl text-white bg-brand-600 hover:bg-brand-700 focus:ring-4 focus:ring-brand-500/30 font-bold text-base shadow-lg shadow-brand-600/20 transition-all cursor-pointer"
+            <!-- YUBORISH TUGMASI -->
+            <button
+                type="submit"
+                id="submitBtn"
+                class="w-full flex items-center justify-center py-4 px-6 rounded-2xl text-white bg-brand-600 hover:bg-brand-700 focus:ring-4 focus:ring-brand-500/30 font-bold text-base shadow-lg shadow-brand-600/20 transition-all cursor-pointer"
             >
                 <i data-lucide="send" id="submitBtnIcon" class="w-5 h-5 mr-2"></i>
-                <span id="submitBtnText">Javobni o‘qituvchiga yuborish</span>
+                <span id="submitBtnText">O'qituvchiga yuborish</span>
             </button>
+
+            <p class="text-center text-[11px] text-gray-400 dark:text-gray-500">
+                Yuborilgan rasmni o'qituvchi va administrator ko'ra oladi
+            </p>
         </form>
     </div>
 
-    <!-- Uploaded Attachments List (Already sent) -->
+    <!-- ============================================================ -->
+    <!-- Allaqachon yuborilgan rasmlar (serverda saqlangan) -->
+    <!-- ============================================================ -->
     {% if attachments %}
     <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm space-y-4">
-        <h3 class="text-base font-bold text-gray-900 dark:text-white flex items-center justify-between">
-            <span class="flex items-center">
-                <i data-lucide="paperclip" class="w-4 h-4 mr-2 text-brand-600"></i>
-                Yuborilgan vazifa suratlari va fayllar ({{ attachments.count }} ta)
+        <div class="flex items-center justify-between">
+            <h3 class="text-base font-bold text-gray-900 dark:text-white flex items-center">
+                <i data-lucide="image-check" class="w-4 h-4 mr-2 text-emerald-600"></i>
+                O'qituvchiga yetib borgan rasmlar ({{ attachments.count }} ta)
+            </h3>
+            <span class="text-xs font-bold text-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800 flex items-center">
+                <i data-lucide="check-circle-2" class="w-3 h-3 mr-1"></i>
+                Yetib bordi ✓
             </span>
-            <span class="text-xs font-normal text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
-                O‘qituvchiga yetib borgan
-            </span>
-        </h3>
+        </div>
 
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {% for att in attachments %}
-            <div class="p-3 bg-gray-50 dark:bg-gray-700/40 rounded-2xl border border-gray-200/60 dark:border-gray-700 flex flex-col justify-between hover:border-brand-300 transition-colors">
-                <div>
-                    {% if att.is_image or att.file_type == 'image' %}
-                    <div class="w-full h-32 bg-gray-200 dark:bg-gray-600 rounded-xl overflow-hidden mb-2 relative group flex items-center justify-center">
-                        <img src="{% url 'secure_submission_media' att.id %}" alt="{{ att.file_name }}" class="w-full h-full object-cover">
+            <div class="p-2.5 bg-gray-50 dark:bg-gray-700/40 rounded-2xl border border-gray-200/60 dark:border-gray-700 flex flex-col">
+                {% if att.is_image or att.file_type == 'image' %}
+                <div
+                    onclick="openPreview('{% url 'secure_submission_media' att.id %}', '{{ att.file_name }}')"
+                    class="w-full h-36 bg-gray-200 dark:bg-gray-600 rounded-xl overflow-hidden mb-2 relative cursor-pointer group"
+                >
+                    <img
+                        src="{% url 'secure_submission_media' att.id %}"
+                        alt="{{ att.file_name }}"
+                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                        loading="lazy"
+                    >
+                    <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <i data-lucide="zoom-in" class="w-6 h-6 text-white"></i>
                     </div>
-                    {% else %}
-                    <div class="w-full h-32 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center mb-2 text-gray-400">
-                        <i data-lucide="file-text" class="w-10 h-10 text-brand-600"></i>
+                    <div class="absolute top-1.5 left-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded bg-black/60 text-white">
+                        {{ forloop.counter }}-rasm
                     </div>
-                    {% endif %}
-                    <p class="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate" title="{{ att.file_name }}">
-                        {{ att.file_name }}
-                    </p>
-                    <p class="text-[10px] text-gray-400">{{ att.size_display }}</p>
                 </div>
-
-                <a href="{% url 'secure_submission_media' att.id %}" target="_blank" class="mt-2 text-xs font-bold text-brand-600 hover:underline flex items-center justify-center py-1.5 rounded-lg bg-brand-50 dark:bg-brand-950/40">
-                    <i data-lucide="maximize-2" class="w-3.5 h-3.5 mr-1"></i> Rasmni ko‘rish
+                {% else %}
+                <div class="w-full h-36 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center mb-2 text-gray-400">
+                    <i data-lucide="file-text" class="w-10 h-10 text-brand-600"></i>
+                </div>
+                {% endif %}
+                <p class="text-[11px] font-semibold text-gray-700 dark:text-gray-300 truncate">{{ att.file_name }}</p>
+                <p class="text-[10px] text-gray-400">{{ att.size_display }}</p>
+                <a href="{% url 'secure_submission_media' att.id %}" target="_blank" class="mt-1.5 text-[11px] font-bold text-brand-600 hover:underline flex items-center">
+                    <i data-lucide="external-link" class="w-3 h-3 mr-1"></i> Ko'rish
                 </a>
             </div>
             {% endfor %}
@@ -319,214 +326,229 @@
     {% endif %}
 
 </div>
+
+<!-- ============================================================ -->
+<!-- Rasm Preview Modal (o'quvchi sahifasida ham katta ko'rish) -->
+<!-- ============================================================ -->
+<div id="studentPreviewModal" class="fixed inset-0 z-50 bg-black/95 hidden flex items-center justify-center p-4" onclick="if(event.target===this)closePreview()">
+    <div class="relative max-w-3xl w-full">
+        <button onclick="closePreview()" class="absolute -top-10 right-0 text-white/70 hover:text-white font-bold flex items-center text-sm">
+            <i data-lucide="x" class="w-5 h-5 mr-1"></i> Yopish (ESC)
+        </button>
+        <img id="previewModalImg" src="" alt="Rasm" class="w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl">
+        <p id="previewModalTitle" class="text-center text-white/70 text-xs mt-2"></p>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    // Global accumulated list of files to send
-    let accumulatedFiles = [];
+    // ============================================================
+    // GLOBAL: To'plangan fayllar ro'yxati
+    // ============================================================
+    let selectedFiles = [];
 
-    function syncRealFileInput() {
-        const input = document.getElementById('realFilesInput');
-        try {
-            const dt = new DataTransfer();
-            accumulatedFiles.forEach(file => dt.items.add(file));
-            input.files = dt.files;
-        } catch (e) {
-            console.warn('DataTransfer not fully supported on this browser:', e);
-        }
+    // ============================================================
+    // KAMERA TRIGGER — har safar yangi input yaratib trigger qilinadi
+    // (mobil brauzerlarda bir marta ishlaydigan muammoni hal qilish)
+    // ============================================================
+    function triggerCamera() {
+        // Eski inputni o'chirib yangi input yaratamiz
+        const old = document.getElementById('cameraInput');
+        if (old) old.remove();
 
-        const countBadge = document.getElementById('selectedCountBadge');
-        if (accumulatedFiles.length > 0) {
-            countBadge.textContent = `${accumulatedFiles.length} ta fayl tanlandi`;
-            countBadge.classList.remove('hidden');
-        } else {
-            countBadge.classList.add('hidden');
-        }
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.id = 'cameraInput';
+        input.accept = 'image/*';
+        input.setAttribute('capture', 'environment');
+        input.className = 'hidden';
+        input.style.display = 'none';
+        document.body.appendChild(input);
+
+        input.addEventListener('change', function() {
+            if (this.files && this.files.length > 0) {
+                addFiles(this.files);
+            }
+        });
+
+        input.click();
     }
 
-    function onFilesAdded(fileList, sourceName) {
-        hideErrorNotice();
-        if (!fileList || fileList.length === 0) return;
+    // Galereya inputini ham yangilaymiz
+    document.getElementById('galleryInput').addEventListener('change', function() {
+        if (this.files && this.files.length > 0) {
+            addFiles(this.files);
+            this.value = ''; // reset — yana tanlash mumkin bo'lsin
+        }
+    });
 
+    // ============================================================
+    // FAYLLARNI QO'SHISH
+    // ============================================================
+    function addFiles(fileList) {
+        hideError();
+        let added = 0;
         for (let i = 0; i < fileList.length; i++) {
             const file = fileList[i];
-            // Check size (50MB)
             if (file.size > 52428800) {
-                showErrorNotice(`"${file.name}" faylining hajmi 50MB dan katta bo'lishi mumkin emas!`);
+                showError('"' + file.name + '" hajmi 50MB dan katta, yuklanmadi.');
                 continue;
             }
-
-            // Check duplicate by name + size
-            const isDuplicate = accumulatedFiles.some(f => f.name === file.name && f.size === file.size);
-            if (!isDuplicate) {
-                accumulatedFiles.push(file);
+            // Dublikat tekshirish
+            const isDup = selectedFiles.some(f => f.name === file.name && f.size === file.size);
+            if (!isDup) {
+                selectedFiles.push(file);
+                added++;
             }
         }
-
-        // Reset the trigger input so user can take photo again immediately
-        document.getElementById('cameraInput').value = '';
-        document.getElementById('galleryInput').value = '';
-
-        syncRealFileInput();
-        renderPreviews();
+        syncInputAndUI();
     }
 
-    function removeFileAt(index) {
-        accumulatedFiles.splice(index, 1);
-        syncRealFileInput();
-        renderPreviews();
+    function removeFile(index) {
+        selectedFiles.splice(index, 1);
+        syncInputAndUI();
     }
 
-    function clearAllSelectedFiles() {
-        accumulatedFiles = [];
-        syncRealFileInput();
-        renderPreviews();
+    function clearAllFiles() {
+        selectedFiles = [];
+        syncInputAndUI();
     }
 
-    function renderPreviews() {
-        const previewList = document.getElementById('filePreviewList');
-        const container = document.getElementById('fileThumbnails');
+    // ============================================================
+    // ASOSIY: DataTransfer bilan real file input ni to'ldirish
+    // va UI ni yangilash
+    // ============================================================
+    function syncInputAndUI() {
+        // 1. Hidden file input ni yangilash
+        const realInput = document.getElementById('realFilesInput');
+        try {
+            const dt = new DataTransfer();
+            selectedFiles.forEach(f => dt.items.add(f));
+            realInput.files = dt.files;
+        } catch(e) {
+            console.warn('DataTransfer not supported:', e);
+        }
+
+        // 2. Counter badge
+        const badge = document.getElementById('selectedCountBadge');
+        if (selectedFiles.length > 0) {
+            badge.textContent = selectedFiles.length + ' ta rasm';
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+
+        // 3. Preview grid ni ko'rsatish/yashirish
+        const previewSection = document.getElementById('previewSection');
+        const previewGrid = document.getElementById('previewGrid');
         const countText = document.getElementById('previewCountText');
 
-        container.innerHTML = '';
-        countText.textContent = accumulatedFiles.length;
+        countText.textContent = selectedFiles.length;
 
-        if (accumulatedFiles.length === 0) {
-            previewList.classList.add('hidden');
+        if (selectedFiles.length === 0) {
+            previewSection.classList.add('hidden');
             return;
         }
 
-        previewList.classList.remove('hidden');
+        previewSection.classList.remove('hidden');
+        previewGrid.innerHTML = '';
 
-        accumulatedFiles.forEach((file, index) => {
+        // 4. Har bir fayl uchun KATTA preview karta
+        selectedFiles.forEach((file, index) => {
             const card = document.createElement('div');
-            card.className = 'relative p-2.5 bg-white dark:bg-gray-800 rounded-2xl border border-brand-200 dark:border-brand-700/70 shadow-sm flex flex-col justify-between group';
+            card.className = 'relative bg-white dark:bg-gray-800 rounded-2xl border-2 border-emerald-300 dark:border-emerald-700/60 shadow-md overflow-hidden group';
 
-            // Top preview thumbnail
-            const isImg = file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|heic|heif|jfif|bmp)$/i.test(file.name);
-            let mediaContainer;
+            const isImg = file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|heic|heif|jfif|bmp|gif)$/i.test(file.name);
 
             if (isImg) {
-                mediaContainer = document.createElement('div');
-                mediaContainer.className = 'w-full h-24 rounded-xl overflow-hidden mb-2 bg-gray-100 dark:bg-gray-700 relative';
+                const imgWrapper = document.createElement('div');
+                imgWrapper.className = 'w-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center overflow-hidden';
+                imgWrapper.style.height = '160px';
+
                 const img = document.createElement('img');
                 img.className = 'w-full h-full object-cover';
-                img.src = URL.createObjectURL(file);
-                mediaContainer.appendChild(img);
+                img.alt = file.name;
+
+                // BLOB URL bilan preview ko'rsatamiz
+                const objectUrl = URL.createObjectURL(file);
+                img.src = objectUrl;
+                img.onload = function() {
+                    // Yuklanganini tasdiqlash (tozalash uchun saqlamaymiz, brauzer o'zi tozalaydi)
+                };
+
+                imgWrapper.appendChild(img);
+                card.appendChild(imgWrapper);
             } else {
-                mediaContainer = document.createElement('div');
-                mediaContainer.className = 'w-full h-24 rounded-xl flex items-center justify-center bg-gray-100 dark:bg-gray-700/60 mb-2 text-brand-600 font-black text-xs uppercase';
-                mediaContainer.textContent = file.name.split('.').pop() || 'FILE';
+                // Hujjat uchun icon
+                const iconDiv = document.createElement('div');
+                iconDiv.className = 'w-full flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-700/60 text-brand-600 font-black text-sm uppercase';
+                iconDiv.style.height = '160px';
+                iconDiv.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 mb-1 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg><span>' + (file.name.split('.').pop() || 'FILE').toUpperCase() + '</span>';
+                card.appendChild(iconDiv);
             }
 
-            // Remove button (X)
-            const removeBtn = document.createElement('button');
-            removeBtn.type = 'button';
-            removeBtn.className = 'absolute top-1 right-1 w-6 h-6 rounded-full bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center shadow-md transition-transform hover:scale-110 z-10';
-            removeBtn.innerHTML = '&times;';
-            removeBtn.title = "Ushbu rasmni o'chirish";
-            removeBtn.onclick = (e) => {
-                e.stopPropagation();
-                removeFileAt(index);
-            };
-            card.appendChild(removeBtn);
-            card.appendChild(mediaContainer);
+            // Raqam nishoni
+            const numBadge = document.createElement('div');
+            numBadge.className = 'absolute top-2 left-2 w-6 h-6 rounded-full bg-brand-600 text-white text-[10px] font-black flex items-center justify-center shadow-md';
+            numBadge.textContent = index + 1;
+            card.appendChild(numBadge);
 
-            // Title & size info
-            const infoDiv = document.createElement('div');
-            const pageBadge = document.createElement('span');
-            pageBadge.className = 'inline-block text-[10px] font-bold text-brand-700 dark:text-brand-300 bg-brand-50 dark:bg-brand-950/60 px-1.5 py-0.5 rounded mb-1';
-            pageBadge.textContent = isImg ? `${index + 1}-sahifa` : 'Hujjat';
-            infoDiv.appendChild(pageBadge);
+            // O'chirish tugmasi
+            const delBtn = document.createElement('button');
+            delBtn.type = 'button';
+            delBtn.className = 'absolute top-2 right-2 w-7 h-7 rounded-full bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center shadow-md transition-all hover:scale-110 z-10 text-base font-bold';
+            delBtn.innerHTML = '&times;';
+            delBtn.title = "Bu rasmni o'chirish";
+            delBtn.onclick = (function(i) {
+                return function(e) {
+                    e.stopPropagation();
+                    removeFile(i);
+                };
+            })(index);
+            card.appendChild(delBtn);
 
-            const nameEl = document.createElement('span');
-            nameEl.className = 'text-[11px] font-semibold text-gray-800 dark:text-gray-200 truncate w-full block';
-            nameEl.title = file.name;
-            nameEl.textContent = file.name;
-            infoDiv.appendChild(nameEl);
+            // Fayl nomi pastda
+            const info = document.createElement('div');
+            info.className = 'px-2 py-1.5 text-[10px] font-semibold text-gray-700 dark:text-gray-300 truncate bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700';
+            info.textContent = file.name;
+            card.appendChild(info);
 
-            const sizeEl = document.createElement('span');
-            sizeEl.className = 'text-[9px] text-gray-400 block';
-            sizeEl.textContent = `${(file.size / 1024).toFixed(1)} KB`;
-            infoDiv.appendChild(sizeEl);
-
-            card.appendChild(infoDiv);
-            container.appendChild(card);
+            previewGrid.appendChild(card);
         });
 
-        if (window.lucide) {
-            lucide.createIcons();
+        if (window.lucide) lucide.createIcons();
+    }
+
+    // ============================================================
+    // SUBMIT — forma yuborilganida
+    // ============================================================
+    function handleSubmit(e) {
+        hideError();
+
+        // Avval DataTransfer ni yangilaymiz
+        const realInput = document.getElementById('realFilesInput');
+        try {
+            const dt = new DataTransfer();
+            selectedFiles.forEach(f => dt.items.add(f));
+            realInput.files = dt.files;
+        } catch(err) {
+            console.warn('DataTransfer sync error:', err);
         }
-    }
 
-    function showErrorNotice(msg) {
-        const notice = document.getElementById('uploadErrorNotice');
-        const text = document.getElementById('uploadErrorNoticeText');
-        text.textContent = msg;
-        notice.classList.remove('hidden');
-    }
+        const text = (document.getElementById('submissionTextInput').value || '').trim();
+        const existingCount = {{ attachments.count|default:0 }};
 
-    function hideErrorNotice() {
-        document.getElementById('uploadErrorNotice').classList.add('hidden');
-    }
-
-    // Drag and Drop handling
-    function handleDragOver(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        document.getElementById('dropZone').classList.add('border-brand-500', 'bg-brand-50/50');
-    }
-
-    function handleDragLeave(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        document.getElementById('dropZone').classList.remove('border-brand-500', 'bg-brand-50/50');
-    }
-
-    function handleDrop(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        document.getElementById('dropZone').classList.remove('border-brand-500', 'bg-brand-50/50');
-        if (e.dataTransfer && e.dataTransfer.files) {
-            onFilesAdded(e.dataTransfer.files, 'dragdrop');
-        }
-    }
-
-    // Handle Quick "Vazifani bajardim" submit: warn if photos were picked but not sent
-    function handleQuickDoneSubmit(e) {
-        if (accumulatedFiles.length > 0) {
-            const confirmed = confirm(
-                "Diqqat! Siz daftarning suratini tanlagansiz.\n" +
-                "Surat o'qituvchiga yetib borishi uchun pastdagi 'Javobni o‘qituvchiga yuborish' tugmasini bosing!\n\n" +
-                "Baribir suratsiz bajarildi deb belgilamoqchimisiz?"
-            );
-            if (!confirmed) {
-                e.preventDefault();
-                return false;
-            }
-        }
-        return true;
-    }
-
-    // Handle main answer submit
-    function handleSubmissionSubmit(e) {
-        hideErrorNotice();
-        syncRealFileInput();
-
-        const textInput = document.getElementById('submissionTextInput');
-        const textVal = (textInput ? textInput.value : '').trim();
-        const hasExistingAttachments = {{ attachments.count|default:0 }} > 0;
-
-        if (accumulatedFiles.length === 0 && textVal === '' && !hasExistingAttachments) {
+        if (selectedFiles.length === 0 && text === '' && existingCount === 0) {
             e.preventDefault();
-            showErrorNotice("Iltimos, avval daftardagi vazifani rasmga oling yoki javob matnini yozing!");
+            showError('Iltimos, avval daftarni rasmga oling yoki javob matnini yozing!');
             window.scrollTo({ top: document.getElementById('submissionForm').offsetTop - 60, behavior: 'smooth' });
             return false;
         }
 
-        // Show uploading state
-        const btn = document.getElementById('submitWorkButton');
+        // Loading holat
+        const btn = document.getElementById('submitBtn');
         const btnText = document.getElementById('submitBtnText');
         const btnIcon = document.getElementById('submitBtnIcon');
 
@@ -534,12 +556,58 @@
         btn.classList.add('opacity-75', 'cursor-not-allowed');
         btnIcon.setAttribute('data-lucide', 'loader-2');
         btnIcon.classList.add('animate-spin');
-        btnText.textContent = "Rasmlar yuklanmoqda, iltimos kuting...";
+        btnText.textContent = selectedFiles.length > 0
+            ? selectedFiles.length + ' ta rasm yuklanmoqda... iltimos kuting'
+            : 'Yuborilmoqda...';
 
-        if (window.lucide) {
-            lucide.createIcons();
-        }
-
+        if (window.lucide) lucide.createIcons();
         return true;
+    }
+
+    // Quick done submit — agar rasmlar tanlangan bo'lsa ogohlantirish
+    function handleQuickDoneSubmit(e) {
+        if (selectedFiles.length > 0) {
+            const ok = confirm(
+                "Diqqat! Siz " + selectedFiles.length + " ta rasm tanlagansiz.\n" +
+                "Rasmni o'qituvchiga yuborish uchun pastdagi 'O'qituvchiga yuborish' tugmasini bosing!\n\n" +
+                "Baribir faylsiz bajarildi deb belgilamoqchimisiz?"
+            );
+            if (!ok) {
+                e.preventDefault();
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // ============================================================
+    // XATO VA PREVIEW MODAL
+    // ============================================================
+    function showError(msg) {
+        const el = document.getElementById('errorNotice');
+        document.getElementById('errorText').textContent = msg;
+        el.classList.remove('hidden');
+    }
+
+    function hideError() {
+        document.getElementById('errorNotice').classList.add('hidden');
+    }
+
+    function openPreview(url, title) {
+        document.getElementById('previewModalImg').src = url;
+        document.getElementById('previewModalTitle').textContent = title || 'Rasm';
+        document.getElementById('studentPreviewModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closePreview() {
+        document.getElementById('studentPreviewModal').classList.add('hidden');
+        document.getElementById('previewModalImg').src = '';
+        document.body.style.overflow = '';
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closePreview();
+    });
 </script>
 {% endblock %}
