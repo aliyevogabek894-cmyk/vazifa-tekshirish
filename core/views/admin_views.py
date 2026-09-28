@@ -1,16 +1,18 @@
 import json
+import random
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.contrib.auth.models import User
 from django.utils import timezone
 from django.db.models import Count, Q
 from django.http import JsonResponse
 
 from core.models import (
     Classroom, StudentProfile, Assignment, Subject,
-    StudentAssignment, Submission, SubmissionAttachment, SubmissionHistory, AuditLog
+    StudentAssignment, Submission, SubmissionAttachment, SubmissionHistory, AuditLog, AdminProfile
 )
-from core.forms import AssignmentForm, StudentAdminForm, ClassroomForm, SubjectForm
-from core.permissions import admin_required
+from core.forms import AssignmentForm, StudentAdminForm, ClassroomForm, SubjectForm, TeacherCreateForm
+from core.permissions import admin_required, admin_only_required, is_admin_user, is_teacher_user
 from core.utils.audit import log_action
 from core.utils.excel_importer import import_students_from_excel
 
@@ -20,6 +22,7 @@ def admin_dashboard(request):
     total_classrooms = Classroom.objects.filter(is_active=True).count()
     total_students = StudentProfile.objects.filter(is_active=True).count()
     total_assignments = Assignment.objects.filter(is_active=True).count()
+    total_teachers = AdminProfile.objects.filter(role='teacher').count()
 
     # Aggregate submission statuses
     all_student_assignments = StudentAssignment.objects.all()
@@ -54,6 +57,7 @@ def admin_dashboard(request):
     context = {
         'total_classrooms': total_classrooms,
         'total_students': total_students,
+        'total_teachers': total_teachers,
         'total_assignments': total_assignments,
         'completed_count': completed_count,
         'not_started_count': not_started_count,
@@ -63,8 +67,91 @@ def admin_dashboard(request):
         'status_chart_json': json.dumps(status_chart_data),
         'class_chart_labels_json': json.dumps(class_labels),
         'class_chart_data_json': json.dumps(class_completion_rates),
+        'is_school_admin': is_admin_user(request.user),
     }
     return render(request, 'admin_panel/dashboard.html', context)
+
+
+@admin_only_required
+def teachers_view(request):
+    """
+    O'qituvchilarni boshqarish bo'limi:
+    Admin o'qituvchilarga login va parol beradi, fanlarini biriktiradi.
+    """
+    teachers = AdminProfile.objects.filter(role='teacher').select_related('user', 'subject').prefetch_related('classrooms').order_by('-created_at')
+    subjects = Subject.objects.filter(is_active=True)
+    classrooms = Classroom.objects.filter(is_active=True)
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'create':
+            form = TeacherCreateForm(request.POST)
+            if form.is_valid():
+                username = form.cleaned_data['username']
+                password = form.cleaned_data['password']
+                full_name = form.cleaned_data['full_name']
+                phone_number = form.cleaned_data.get('phone_number', '')
+                subject = form.cleaned_data.get('subject')
+                cls_list = form.cleaned_data.get('classrooms')
+
+                # Create User
+                user = User.objects.create_user(
+                    username=username,
+                    password=password,
+                    first_name=full_name.split()[0] if full_name else '',
+                    is_staff=True
+                )
+
+                # Create Teacher AdminProfile
+                teacher_prof = AdminProfile.objects.create(
+                    user=user,
+                    full_name=full_name,
+                    phone_number=phone_number,
+                    role='teacher',
+                    subject=subject,
+                    raw_password=password
+                )
+                if cls_list:
+                    teacher_prof.classrooms.set(cls_list)
+
+                log_action(request, f"Yangi o'qituvchi qo'shildi: {full_name} (login: {username})", "AdminProfile", teacher_prof.id)
+                messages.success(request, f"O'qituvchi '{full_name}' muvaffaqiyatli yaratildi! Login: {username}, Parol: {password}")
+                return redirect('admin_teachers')
+            else:
+                messages.error(request, f"Xatolik: {form.errors}")
+
+        elif action == 'update_password':
+            teacher_id = request.POST.get('teacher_id')
+            new_pass = request.POST.get('new_password', '').strip()
+            if teacher_id and new_pass:
+                t_prof = get_object_or_404(AdminProfile, id=teacher_id, role='teacher')
+                t_prof.user.set_password(new_pass)
+                t_prof.user.save()
+                t_prof.raw_password = new_pass
+                t_prof.save()
+                log_action(request, f"O'qituvchi paroli yangilandi: {t_prof.full_name}", "AdminProfile", t_prof.id)
+                messages.success(request, f"{t_prof.full_name} paroli yangilandi: {new_pass}")
+            return redirect('admin_teachers')
+
+        elif action == 'delete':
+            teacher_id = request.POST.get('teacher_id')
+            t_prof = get_object_or_404(AdminProfile, id=teacher_id, role='teacher')
+            name = t_prof.full_name
+            t_user = t_prof.user
+            t_prof.delete()
+            t_user.delete()
+            log_action(request, f"O'qituvchi o'chirildi: {name}", "AdminProfile", teacher_id)
+            messages.success(request, f"O'qituvchi {name} tizimdan o'chirildi.")
+            return redirect('admin_teachers')
+
+    form = TeacherCreateForm()
+    return render(request, 'admin_panel/teachers.html', {
+        'teachers': teachers,
+        'subjects': subjects,
+        'classrooms': classrooms,
+        'form': form,
+    })
 
 
 @admin_required
@@ -121,21 +208,22 @@ def students_view(request):
         if action == 'create':
             form = StudentAdminForm(request.POST)
             if form.is_valid():
-                from django.contrib.auth.models import User
                 phone = form.cleaned_data['phone_number']
                 fn = form.cleaned_data['first_name']
                 ln = form.cleaned_data['last_name']
                 cls_obj = form.cleaned_data['classroom']
 
-                # Create user
+                # Create user with a generated 6-digit password
+                gen_pass = f"{random.randint(100000, 999999)}"
                 import re
                 username = f"std_{re.sub(r'[^0-9]', '', phone)[-9:]}"
                 user = User.objects.create_user(username=username, first_name=fn, last_name=ln)
-                user.set_unusable_password()
+                user.set_password(gen_pass)
                 user.save()
 
                 student = form.save(commit=False)
                 student.user = user
+                student.raw_password = gen_pass
                 student.save()
 
                 # Sync assignments
@@ -143,11 +231,22 @@ def students_view(request):
                     for ass in cls_obj.assignments.filter(is_active=True):
                         StudentAssignment.objects.get_or_create(assignment=ass, student=student)
 
-                log_action(request, f"O'quvchi qo'shildi: {student.full_name}", "StudentProfile", student.id)
-                messages.success(request, f"O'quvchi {student.full_name} muvaffaqiyatli qo'shildi!")
+                log_action(request, f"O'quvchi qo'shildi: {student.full_name} (parol: {gen_pass})", "StudentProfile", student.id)
+                messages.success(request, f"O'quvchi {student.full_name} qo'shildi! Biriktirilgan parol: {gen_pass}")
                 return redirect('admin_students')
             else:
                 messages.error(request, "Xatolik! Telefon raqami band bo'lishi mumkin.")
+        elif action == 'reset_password':
+            sid = request.POST.get('student_id')
+            st = get_object_or_404(StudentProfile, id=sid)
+            new_pass = f"{random.randint(100000, 999999)}"
+            st.user.set_password(new_pass)
+            st.user.save()
+            st.raw_password = new_pass
+            st.save()
+            log_action(request, f"O'quvchi paroli qayta tiklandi: {st.full_name} ({new_pass})", "StudentProfile", st.id)
+            messages.success(request, f"{st.full_name} uchun yangi parol: {new_pass}")
+            return redirect('admin_students')
         elif action == 'toggle_status':
             sid = request.POST.get('student_id')
             st = get_object_or_404(StudentProfile, id=sid)
@@ -189,10 +288,11 @@ def student_excel_import_view(request):
 
 @admin_required
 def assignments_view(request):
-    assignments = Assignment.objects.select_related('subject', 'created_by').prefetch_related('classrooms').order_by('-due_date')
-    subjects = Subject.objects.filter(is_active=True)
-    classrooms = Classroom.objects.filter(is_active=True)
-
+    """
+    Uy vazifalari bo'limi:
+    - Administrator ham, o'qituvchi ham yangi vazifa yuklashi va boshqarishi mumkin.
+    - Vazifa biriktirilgan sinfning barcha o'quvchilariga avtomatik yuboriladi.
+    """
     if request.method == 'POST':
         action = request.POST.get('action')
         if action == 'create':
@@ -201,15 +301,17 @@ def assignments_view(request):
                 ass = form.save(commit=False)
                 ass.created_by = request.user
                 ass.save()
-                form.save_m2m() # Saves classrooms
+                form.save_m2m()  # Saves classrooms
 
                 # Automatically enroll all active students of selected classrooms
+                enrolled_count = 0
                 for cls_obj in ass.classrooms.all():
                     for st in cls_obj.students.filter(is_active=True):
                         StudentAssignment.objects.get_or_create(assignment=ass, student=st)
+                        enrolled_count += 1
 
                 log_action(request, f"Yangi uy vazifasi yaratildi: {ass.title}", "Assignment", ass.id)
-                messages.success(request, f"'{ass.title}' vazifasi muvaffaqiyatli yaratildi va o'quvchilarga biriktirildi!")
+                messages.success(request, f"'{ass.title}' vazifasi muvaffaqiyatli yaratildi va {enrolled_count} ta o'quvchiga biriktirildi!")
                 return redirect('admin_assignments')
             else:
                 messages.error(request, f"Formada xatoliklar mavjud: {form.errors}")
@@ -222,12 +324,17 @@ def assignments_view(request):
             messages.success(request, f"'{title}' vazifasi o'chirildi.")
             return redirect('admin_assignments')
 
+    assignments = Assignment.objects.select_related('subject', 'created_by').prefetch_related('classrooms').order_by('-due_date')
+    subjects = Subject.objects.filter(is_active=True).order_by('name')
+    classrooms = Classroom.objects.filter(is_active=True).order_by('grade_level', 'name')
     form = AssignmentForm()
+
     return render(request, 'admin_panel/assignments.html', {
         'assignments': assignments,
         'subjects': subjects,
         'classrooms': classrooms,
-        'form': form
+        'form': form,
+        'is_read_only': False,
     })
 
 
@@ -266,11 +373,16 @@ def submissions_view(request):
         'selected_status': status_filter,
         'selected_subject': subject_id,
         'search_query': query,
+        'is_read_only': is_admin_user(request.user),
     })
 
 
 @admin_required
 def review_submission_view(request, task_id):
+    """
+    Topshiriqni tekshirish oynasi:
+    - O'qituvchi yoki administrator javobni ko'rib baholaydi, status belgilaydi va izoh yozadi.
+    """
     task = get_object_or_404(
         StudentAssignment.objects.select_related('student', 'student__classroom', 'assignment', 'assignment__subject'),
         id=task_id
@@ -296,7 +408,7 @@ def review_submission_view(request, task_id):
         # Log history
         SubmissionHistory.objects.create(
             student_assignment=task,
-            action=f"O'qituvchi tekshirdi va baholadi: {task.get_status_display()}",
+            action=f"Tekshirildi va baholandi: {task.get_status_display()}",
             changed_by=request.user,
             old_status=old_status,
             new_status=new_status,
@@ -318,6 +430,7 @@ def review_submission_view(request, task_id):
         'submission': submission,
         'attachments': attachments,
         'history': history,
+        'is_read_only': False,
     })
 
 

@@ -5,15 +5,50 @@ from django.http import HttpResponseForbidden, Http404
 from django.contrib import messages
 
 
+def is_admin_user(user):
+    """Checks if the user is the School Superadministrator (not a regular teacher)"""
+    if not user.is_authenticated:
+        return False
+    if user.is_superuser:
+        return True
+    if hasattr(user, 'admin_profile') and user.admin_profile.role == 'admin':
+        return True
+    return False
+
+
+def is_teacher_user(user):
+    """Checks if the user is a Teacher"""
+    if not user.is_authenticated:
+        return False
+    if hasattr(user, 'admin_profile') and user.admin_profile.role == 'teacher':
+        return True
+    if user.is_staff and not user.is_superuser:
+        return True
+    return False
+
+
 def admin_required(view_func):
-    """Decorator ensuring that the logged in user is an Admin / Teacher"""
+    """Decorator ensuring that the logged in user is either an Admin or a Teacher"""
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
         if not request.user.is_authenticated:
             return redirect('admin_login')
         if not (request.user.is_staff or request.user.is_superuser or hasattr(request.user, 'admin_profile')):
-            messages.error(request, "Ushbu sahifaga faqat administratorlar kira oladi!")
+            messages.error(request, "Ushbu sahifaga faqat administrator yoki o'qituvchilar kira oladi!")
             return redirect('student_dashboard' if hasattr(request.user, 'student_profile') else 'login')
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
+
+
+def admin_only_required(view_func):
+    """Decorator ensuring that ONLY the Superadministrator can access (e.g. managing teachers)"""
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect('admin_login')
+        if not is_admin_user(request.user):
+            messages.error(request, "Ushbu bo'lim faqat bosh administrator uchun ochiq!")
+            return redirect('admin_dashboard')
         return view_func(request, *args, **kwargs)
     return _wrapped_view
 

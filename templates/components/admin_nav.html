@@ -1,75 +1,105 @@
 <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 mb-6">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex space-x-1 sm:space-x-4 overflow-x-auto py-3 scrollbar-none">
-            <a href="{% url 'admin_dashboard' %}" class="flex items-center px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all
-                {% if request.resolver_match.url_name == 'admin_dashboard' %}
-                    bg-brand-600 text-white shadow-md shadow-brand-600/20
-                {% else %}
-                    text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700
-                {% endif %}">
-                <i data-lucide="layout-dashboard" class="w-4 h-4 mr-2"></i>
-                Dashboard
-            </a>
+        <div class="flex items-center justify-between py-2">
+            <!-- Navigation Links -->
+            <div class="flex space-x-1 sm:space-x-3 overflow-x-auto py-1 scrollbar-none">
+                <a href="{% url 'admin_dashboard' %}" class="flex items-center px-3 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all
+                    {% if request.resolver_match.url_name == 'admin_dashboard' %}
+                        bg-brand-600 text-white shadow-md shadow-brand-600/20
+                    {% else %}
+                        text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700
+                    {% endif %}">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4 mr-1.5"></i>
+                    Dashboard
+                </a>
 
-            <a href="{% url 'admin_reports' %}" class="flex items-center px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all
-                {% if request.resolver_match.url_name == 'admin_reports' %}
-                    bg-emerald-600 text-white shadow-md shadow-emerald-600/20
-                {% else %}
-                    text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100
-                {% endif %}">
-                <i data-lucide="file-spreadsheet" class="w-4 h-4 mr-2"></i>
-                Hisobotlar & Excel
-            </a>
+                {% if is_school_admin %}
+                <a href="{% url 'admin_teachers' %}" class="flex items-center px-3 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all
+                    {% if request.resolver_match.url_name == 'admin_teachers' %}
+                        bg-indigo-600 text-white shadow-md shadow-indigo-600/20
+                    {% else %}
+                        text-indigo-700 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100
+                    {% endif %}">
+                    <i data-lucide="graduation-cap" class="w-4 h-4 mr-1.5"></i>
+                    O‘qituvchilar
+                </a>
+                {% endif %}
 
-            <a href="{% url 'admin_submissions' %}" class="flex items-center px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all
-                {% if request.resolver_match.url_name == 'admin_submissions' or request.resolver_match.url_name == 'admin_review_submission' %}
-                    bg-brand-600 text-white shadow-md shadow-brand-600/20
-                {% else %}
-                    text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700
-                {% endif %}">
-                <i data-lucide="inbox" class="w-4 h-4 mr-2"></i>
-                Tekshirish
-            </a>
+                <a href="{% url 'admin_submissions' %}" class="flex items-center px-3 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all
+                    {% if request.resolver_match.url_name == 'admin_submissions' or request.resolver_match.url_name == 'admin_review_submission' %}
+                        bg-brand-600 text-white shadow-md shadow-brand-600/20
+                    {% else %}
+                        text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700
+                    {% endif %}">
+                    <i data-lucide="inbox" class="w-4 h-4 mr-1.5"></i>
+                    Tekshirish
+                </a>
 
-            <a href="{% url 'admin_assignments' %}" class="flex items-center px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all
-                {% if request.resolver_match.url_name == 'admin_assignments' %}
-                    bg-brand-600 text-white shadow-md shadow-brand-600/20
-                {% else %}
-                    text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700
-                {% endif %}">
-                <i data-lucide="book-marked" class="w-4 h-4 mr-2"></i>
-                Vazifalar
-            </a>
+                <a href="{% url 'admin_assignments' %}" class="flex items-center px-3 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all
+                    {% if request.resolver_match.url_name == 'admin_assignments' %}
+                        bg-brand-600 text-white shadow-md shadow-brand-600/20
+                    {% else %}
+                        text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700
+                    {% endif %}">
+                    <i data-lucide="book-marked" class="w-4 h-4 mr-1.5"></i>
+                    Vazifalar
+                </a>
 
-            <a href="{% url 'admin_students' %}" class="flex items-center px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all
-                {% if request.resolver_match.url_name == 'admin_students' %}
-                    bg-brand-600 text-white shadow-md shadow-brand-600/20
-                {% else %}
-                    text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700
-                {% endif %}">
-                <i data-lucide="users" class="w-4 h-4 mr-2"></i>
-                O‘quvchilar
-            </a>
+                <a href="{% url 'admin_students' %}" class="flex items-center px-3 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all
+                    {% if request.resolver_match.url_name == 'admin_students' %}
+                        bg-brand-600 text-white shadow-md shadow-brand-600/20
+                    {% else %}
+                        text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700
+                    {% endif %}">
+                    <i data-lucide="users" class="w-4 h-4 mr-1.5"></i>
+                    O‘quvchilar
+                </a>
 
-            <a href="{% url 'admin_classrooms' %}" class="flex items-center px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all
-                {% if request.resolver_match.url_name == 'admin_classrooms' %}
-                    bg-brand-600 text-white shadow-md shadow-brand-600/20
-                {% else %}
-                    text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700
-                {% endif %}">
-                <i data-lucide="school" class="w-4 h-4 mr-2"></i>
-                Sinflar
-            </a>
+                <a href="{% url 'admin_reports' %}" class="flex items-center px-3 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all
+                    {% if request.resolver_match.url_name == 'admin_reports' %}
+                        bg-emerald-600 text-white shadow-md shadow-emerald-600/20
+                    {% else %}
+                        text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100
+                    {% endif %}">
+                    <i data-lucide="file-spreadsheet" class="w-4 h-4 mr-1.5"></i>
+                    Hisobotlar
+                </a>
 
-            <a href="{% url 'admin_audit_logs' %}" class="flex items-center px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all
-                {% if request.resolver_match.url_name == 'admin_audit_logs' %}
-                    bg-brand-600 text-white shadow-md shadow-brand-600/20
+                <a href="{% url 'admin_classrooms' %}" class="flex items-center px-3 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all
+                    {% if request.resolver_match.url_name == 'admin_classrooms' %}
+                        bg-brand-600 text-white shadow-md shadow-brand-600/20
+                    {% else %}
+                        text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700
+                    {% endif %}">
+                    <i data-lucide="school" class="w-4 h-4 mr-1.5"></i>
+                    Sinflar
+                </a>
+
+                <a href="{% url 'admin_audit_logs' %}" class="flex items-center px-3 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all
+                    {% if request.resolver_match.url_name == 'admin_audit_logs' %}
+                        bg-brand-600 text-white shadow-md shadow-brand-600/20
+                    {% else %}
+                        text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700
+                    {% endif %}">
+                    <i data-lucide="shield-check" class="w-4 h-4 mr-1.5"></i>
+                    Audit
+                </a>
+            </div>
+
+            <!-- Role Badge -->
+            <div class="hidden md:flex items-center pl-4 shrink-0">
+                {% if is_school_admin %}
+                <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
+                    <i data-lucide="shield" class="w-3.5 h-3.5"></i>
+                    Bosh Administrator
+                </span>
                 {% else %}
-                    text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700
-                {% endif %}">
-                <i data-lucide="shield-check" class="w-4 h-4 mr-2"></i>
-                Audit Log
-            </a>
+                <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-800">
+                    <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                    O‘qituvchi
+                </span>
+                {% endif %}
+            </div>
         </div>
     </div>
 </div>

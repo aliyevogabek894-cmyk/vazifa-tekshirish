@@ -1,31 +1,42 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Tasdiqlash kodi — Maktab Uy Vazifalari{% endblock %}
 
 {% block content %}
 <div class="min-h-[80vh] flex flex-col justify-center items-center px-4 sm:px-6 lg:px-8 py-12">
     <div class="w-full max-w-md bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700">
-        <!-- Header -->
+        <!-- Header with Teacher Portrait -->
         <div class="text-center mb-6">
-            <div class="mx-auto w-16 h-16 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 rounded-2xl flex items-center justify-center mb-4">
-                <i data-lucide="key-round" class="w-8 h-8"></i>
+            <div class="relative mx-auto w-20 h-20 mb-3">
+                <img 
+                    src="{% static 'img/teacher_profile.jpg' %}" 
+                    alt="O‘qituvchi" 
+                    class="w-20 h-20 rounded-full object-cover shadow-lg ring-4 ring-emerald-500/30 mx-auto"
+                >
+                <div class="absolute -bottom-1 -right-1 bg-emerald-600 text-white p-1.5 rounded-full shadow-md">
+                    <i data-lucide="key-round" class="w-3.5 h-3.5"></i>
+                </div>
             </div>
-            <h2 class="text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight">Kodni kiriting</h2>
+            <h2 class="text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight">Tasdiqlash kodi</h2>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                <span class="font-semibold text-gray-800 dark:text-gray-200">{{ phone }}</span> raqamiga yuborilgan 6 xonali SMS kodni kiriting.
+                <span class="font-semibold text-gray-800 dark:text-gray-200">{{ phone }}</span> raqami uchun kod tayyorlandi.
             </p>
         </div>
 
         {% if dev_otp %}
-        <!-- Development helper banner -->
-        <div class="mb-6 p-3.5 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-2xl flex items-center justify-between">
-            <div class="flex items-center text-xs text-blue-700 dark:text-blue-300">
-                <i data-lucide="info" class="w-4 h-4 mr-2 flex-shrink-0"></i>
-                <span>Test kodi: <strong class="text-sm font-mono tracking-wider">{{ dev_otp }}</strong> (yoki 123456)</span>
+        <!-- Server Generated OTP Banner -->
+        <div class="mb-6 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40 border-2 border-emerald-400 dark:border-emerald-600 rounded-2xl text-center shadow-sm">
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 text-xs font-bold mb-2">
+                <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+                Server tomonidan berilgan kod:
             </div>
-            <button type="button" onclick="document.getElementById('otp').value='{{ dev_otp }}'" class="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline">
-                To'ldirish
-            </button>
+            <div class="text-3xl font-black font-mono tracking-widest text-emerald-600 dark:text-emerald-400 my-1 select-all">
+                {{ dev_otp }}
+            </div>
+            <p class="text-xs text-emerald-700 dark:text-emerald-300 mt-1">
+                ✅ Kod quyidagi maydonga avtomatik kiritildi. Faqat <b>«Tasdiqlash va Kirish»</b> tugmasini bosing!
+            </p>
         </div>
         {% endif %}
 
@@ -41,10 +52,11 @@
                     id="otp" 
                     name="otp" 
                     maxlength="6" 
+                    value="{{ dev_otp|default:'' }}"
                     required 
                     autofocus
                     placeholder="••••••" 
-                    class="w-full text-center py-4 px-4 rounded-2xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white text-3xl font-mono tracking-widest focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:outline-none transition-all"
+                    class="w-full text-center py-4 px-4 rounded-2xl border-2 border-emerald-300 dark:border-emerald-700 bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white text-3xl font-mono tracking-widest focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:outline-none transition-all shadow-inner"
                 >
             </div>
 
@@ -53,7 +65,7 @@
                 class="w-full flex items-center justify-center py-4 px-6 rounded-2xl text-white bg-emerald-600 hover:bg-emerald-700 focus:ring-4 focus:ring-emerald-500/30 text-base font-bold shadow-lg shadow-emerald-600/30 hover:shadow-xl transition-all duration-200"
             >
                 <i data-lucide="check-circle" class="w-5 h-5 mr-2"></i>
-                <span>Tasdiqlash</span>
+                <span>Tasdiqlash va Kirish</span>
             </button>
         </form>
 

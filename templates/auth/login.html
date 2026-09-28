@@ -1,50 +1,157 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Kirish — Maktab Uy Vazifalari{% endblock %}
+{% block title %}O‘quvchilar kirishi — Maktab Uy Vazifalari{% endblock %}
 
 {% block content %}
-<div class="min-h-[80vh] flex flex-col justify-center items-center px-4 sm:px-6 lg:px-8 py-12">
+<div class="min-h-[85vh] flex flex-col justify-center items-center px-4 sm:px-6 lg:px-8 py-10">
     <div class="w-full max-w-md bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700">
         <!-- Header -->
-        <div class="text-center mb-8">
-            <div class="mx-auto w-16 h-16 bg-gradient-to-tr from-brand-600 to-indigo-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-brand-500/20 mb-4">
-                <i data-lucide="smartphone" class="w-8 h-8"></i>
+        <div class="text-center mb-6">
+            <div class="relative mx-auto w-20 h-20 mb-3">
+                <img 
+                    src="{% static 'img/teacher_profile.jpg' %}" 
+                    alt="Maktab" 
+                    class="w-20 h-20 rounded-full object-cover shadow-xl ring-4 ring-brand-500/30 dark:ring-brand-400/40 mx-auto"
+                >
+                <div class="absolute -bottom-1 -right-1 bg-brand-600 text-white p-1.5 rounded-full shadow-md">
+                    <i data-lucide="graduation-cap" class="w-4 h-4"></i>
+                </div>
             </div>
-            <h2 class="text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight">O‘quvchilar uchun kirish</h2>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                Telefon raqamingizni kiriting. Tasdiqlash uchun SMS kod yuboriladi.
+            <h2 class="text-2xl font-black text-gray-900 dark:text-white tracking-tight">O‘quvchilar portali</h2>
+            <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Telefon raqamingiz va parolingiz orqali tizimga kiring
             </p>
         </div>
 
-        <!-- Phone Form -->
-        <form method="POST" action="{% url 'login' %}" class="space-y-6">
+        <!-- Mode Toggle Tabs -->
+        <div class="flex p-1 bg-gray-100 dark:bg-gray-700/60 rounded-2xl mb-6">
+            <button 
+                type="button" 
+                id="tabLoginBtn"
+                onclick="switchAuthTab('login')" 
+                class="flex-1 py-2.5 text-xs sm:text-sm font-bold rounded-xl transition-all shadow-sm bg-white dark:bg-gray-800 text-brand-600 dark:text-brand-400"
+            >
+                <i data-lucide="log-in" class="w-4 h-4 inline-block mr-1.5"></i>
+                Kirish (Parol bilan)
+            </button>
+            <button 
+                type="button" 
+                id="tabPassBtn"
+                onclick="switchAuthTab('get_password')" 
+                class="flex-1 py-2.5 text-xs sm:text-sm font-semibold rounded-xl transition-all text-gray-500 dark:text-gray-400 hover:text-gray-900"
+            >
+                <i data-lucide="key-round" class="w-4 h-4 inline-block mr-1.5"></i>
+                1-marta kirish / Parol olish
+            </button>
+        </div>
+
+        <!-- 1. LOGIN FORM (Har doim telefon va parol orqali kirish) -->
+        <form id="loginForm" method="POST" action="{% url 'login' %}" class="space-y-5">
             {% csrf_token %}
+            <input type="hidden" name="action" value="login">
+
             <div>
-                <label for="phone" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                <label for="phone" class="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
                     Telefon raqamingiz
                 </label>
                 <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
                         <i data-lucide="phone" class="w-5 h-5"></i>
                     </div>
                     <input 
                         type="tel" 
                         id="phone" 
                         name="phone" 
+                        value="{{ phone|default:'' }}"
                         required 
                         placeholder="+998 90 123 45 67" 
-                        class="w-full pl-12 pr-4 py-3.5 rounded-2xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white text-lg font-medium tracking-wide focus:ring-2 focus:ring-brand-500 focus:border-brand-500 focus:outline-none transition-all placeholder:text-gray-400"
+                        class="w-full pl-11 pr-4 py-3 rounded-2xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white font-medium focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all placeholder:text-gray-400"
                     >
                 </div>
-                <p class="text-xs text-gray-400 mt-2">Format: +998901234567 yoki 901234567</p>
+            </div>
+
+            <div>
+                <div class="flex items-center justify-between mb-1.5">
+                    <label for="password" class="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300">
+                        Parolingiz
+                    </label>
+                    <button type="button" onclick="switchAuthTab('get_password')" class="text-xs text-brand-600 dark:text-brand-400 hover:underline">
+                        Parolni unutdingizmi?
+                    </button>
+                </div>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                        <i data-lucide="lock" class="w-5 h-5"></i>
+                    </div>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        required 
+                        placeholder="••••••" 
+                        class="w-full pl-11 pr-11 py-3 rounded-2xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white font-medium focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all placeholder:text-gray-400"
+                    >
+                    <button 
+                        type="button" 
+                        onclick="togglePasswordVisibility('password', this)" 
+                        class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                    >
+                        <i data-lucide="eye" class="w-5 h-5"></i>
+                    </button>
+                </div>
             </div>
 
             <button 
                 type="submit" 
-                class="w-full flex items-center justify-center py-4 px-6 rounded-2xl text-white bg-brand-600 hover:bg-brand-700 focus:ring-4 focus:ring-brand-500/30 text-base font-bold shadow-lg shadow-brand-600/30 hover:shadow-xl transition-all duration-200"
+                class="w-full flex items-center justify-center py-3.5 px-6 rounded-2xl text-white bg-brand-600 hover:bg-brand-700 focus:ring-4 focus:ring-brand-500/30 text-base font-bold shadow-lg shadow-brand-600/30 hover:shadow-xl transition-all duration-200"
             >
-                <span>SMS kodni olish</span>
+                <span>Tizimga kirish</span>
                 <i data-lucide="arrow-right" class="w-5 h-5 ml-2"></i>
+            </button>
+        </form>
+
+        <!-- 2. GET PASSWORD FORM (1 martta parol berish / birinchi marta kirish) -->
+        <form id="getPasswordForm" method="POST" action="{% url 'login' %}" class="space-y-5 hidden">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="get_password">
+
+            <div class="p-4 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-2xl text-xs text-blue-800 dark:text-blue-300">
+                <p class="font-semibold mb-1">
+                    <i data-lucide="info" class="w-4 h-4 inline-block mr-1 text-blue-600"></i>
+                    1 marta beriladigan parol:
+                </p>
+                <p>
+                    Telefon raqamingizni kiriting. Tizim sizga 6 xonali maxsus parol beradi. Keyinchalik har safar telefon va shu parol bilan to‘g‘ridan-to‘g‘ri kirasiz.
+                </p>
+            </div>
+
+            <div>
+                <label for="get_phone" class="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                    Telefon raqamingiz
+                </label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                        <i data-lucide="phone" class="w-5 h-5"></i>
+                    </div>
+                    <input 
+                        type="tel" 
+                        id="get_phone" 
+                        name="phone" 
+                        value="{{ phone|default:'' }}"
+                        required 
+                        placeholder="+998 90 123 45 67" 
+                        class="w-full pl-11 pr-4 py-3 rounded-2xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white font-medium focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all placeholder:text-gray-400"
+                    >
+                </div>
+            </div>
+
+            <button 
+                type="submit" 
+                class="w-full flex items-center justify-center py-3.5 px-6 rounded-2xl text-white bg-emerald-600 hover:bg-emerald-700 focus:ring-4 focus:ring-emerald-500/30 text-base font-bold shadow-lg shadow-emerald-600/30 hover:shadow-xl transition-all duration-200"
+            >
+                <i data-lucide="key" class="w-5 h-5 mr-2"></i>
+                <span>Parolni olish</span>
             </button>
         </form>
 
@@ -52,11 +159,49 @@
             <p class="text-xs text-gray-500 dark:text-gray-400">
                 O‘qituvchi yoki maktab ma’murimisiz?
             </p>
-            <a href="{% url 'admin_login' %}" class="inline-flex items-center text-sm font-semibold text-brand-600 dark:text-brand-400 hover:underline mt-1">
-                <i data-lucide="shield-alert" class="w-4 h-4 mr-1"></i>
-                Admin / O‘qituvchi sifatida kirish
+            <a href="{% url 'admin_login' %}" class="inline-flex items-center text-sm font-semibold text-brand-600 dark:text-brand-400 hover:underline mt-1.5">
+                <i data-lucide="shield" class="w-4 h-4 mr-1.5"></i>
+                O‘qituvchi / Admin sifatida kirish
             </a>
         </div>
     </div>
 </div>
+
+<script>
+function switchAuthTab(tab) {
+    const loginForm = document.getElementById('loginForm');
+    const getPassForm = document.getElementById('getPasswordForm');
+    const tabLoginBtn = document.getElementById('tabLoginBtn');
+    const tabPassBtn = document.getElementById('tabPassBtn');
+
+    if (tab === 'login') {
+        loginForm.classList.remove('hidden');
+        getPassForm.classList.add('hidden');
+        tabLoginBtn.className = "flex-1 py-2.5 text-xs sm:text-sm font-bold rounded-xl transition-all shadow-sm bg-white dark:bg-gray-800 text-brand-600 dark:text-brand-400";
+        tabPassBtn.className = "flex-1 py-2.5 text-xs sm:text-sm font-semibold rounded-xl transition-all text-gray-500 dark:text-gray-400 hover:text-gray-900";
+    } else {
+        loginForm.classList.add('hidden');
+        getPassForm.classList.remove('hidden');
+        tabPassBtn.className = "flex-1 py-2.5 text-xs sm:text-sm font-bold rounded-xl transition-all shadow-sm bg-white dark:bg-gray-800 text-emerald-600 dark:text-emerald-400";
+        tabLoginBtn.className = "flex-1 py-2.5 text-xs sm:text-sm font-semibold rounded-xl transition-all text-gray-500 dark:text-gray-400 hover:text-gray-900";
+    }
+    if (window.lucide) lucide.createIcons();
+}
+
+function togglePasswordVisibility(inputId, btn) {
+    const input = document.getElementById(inputId);
+    if (input.type === 'password') {
+        input.type = 'text';
+        btn.innerHTML = '<i data-lucide="eye-off" class="w-5 h-5"></i>';
+    } else {
+        input.type = 'password';
+        btn.innerHTML = '<i data-lucide="eye" class="w-5 h-5"></i>';
+    }
+    if (window.lucide) lucide.createIcons();
+}
+
+{% if active_tab == 'get_password' %}
+switchAuthTab('get_password');
+{% endif %}
+</script>
 {% endblock %}

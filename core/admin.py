@@ -9,7 +9,9 @@ from core.models import (
 
 @admin.register(AdminProfile)
 class AdminProfileAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'phone_number', 'role', 'created_at')
+    list_display = ('full_name', 'user', 'role', 'subject', 'raw_password', 'phone_number', 'created_at')
+    list_filter = ('role', 'subject')
+    search_fields = ('full_name', 'user__username', 'phone_number')
 
 
 @admin.register(Classroom)
@@ -25,7 +27,7 @@ class SubjectAdmin(admin.ModelAdmin):
 
 @admin.register(StudentProfile)
 class StudentProfileAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'classroom', 'phone_number', 'is_active', 'last_active')
+    list_display = ('full_name', 'classroom', 'phone_number', 'raw_password', 'is_active', 'last_active')
     list_filter = ('classroom', 'is_active')
     search_fields = ('first_name', 'last_name', 'phone_number')
 

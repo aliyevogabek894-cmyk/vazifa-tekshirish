@@ -4,37 +4,90 @@
 
 {% block content %}
 <div class="min-h-[85vh] flex flex-col justify-center items-center px-4 sm:px-6 lg:px-8 py-10">
-    <div class="w-full max-w-lg bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700">
+    <div class="w-full max-w-xl bg-white dark:bg-gray-800 p-6 sm:p-8 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700">
         <!-- Header -->
         <div class="text-center mb-8">
             <div class="mx-auto w-16 h-16 bg-blue-100 dark:bg-blue-950/60 text-brand-600 dark:text-brand-400 rounded-2xl flex items-center justify-center mb-4">
                 <i data-lucide="user-plus" class="w-8 h-8"></i>
             </div>
-            <h2 class="text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight">Profilni to‘ldirish</h2>
+            <h2 class="text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight">O‘quvchi profilini to‘ldirish</h2>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                Telefon raqamingiz muvaffaqiyatli tasdiqlandi: <strong class="text-gray-800 dark:text-gray-200">{{ phone }}</strong>. Endi ma’lumotlaringizni kiriting.
+                Telefon raqamingiz: <strong class="text-brand-600 dark:text-brand-400">{{ phone }}</strong>.<br>
+                Ma’lumotlaringizni kiriting va o‘z sinfingizni tanlang.
             </p>
         </div>
 
-        <form method="POST" enctype="multipart/form-data" action="{% url 'register_profile' %}" class="space-y-5">
+        <form method="POST" enctype="multipart/form-data" action="{% url 'register_profile' %}" class="space-y-6">
             {% csrf_token %}
 
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Ismingiz *</label>
-                {{ form.first_name }}
-                {% if form.first_name.errors %}<p class="text-xs text-rose-500 mt-1">{{ form.first_name.errors.0 }}</p>{% endif %}
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Ismingiz *</label>
+                    {{ form.first_name }}
+                    {% if form.first_name.errors %}<p class="text-xs text-rose-500 mt-1">{{ form.first_name.errors.0 }}</p>{% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Familiyangiz *</label>
+                    {{ form.last_name }}
+                    {% if form.last_name.errors %}<p class="text-xs text-rose-500 mt-1">{{ form.last_name.errors.0 }}</p>{% endif %}
+                </div>
             </div>
 
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Familiyangiz *</label>
-                {{ form.last_name }}
-                {% if form.last_name.errors %}<p class="text-xs text-rose-500 mt-1">{{ form.last_name.errors.0 }}</p>{% endif %}
-            </div>
+            <!-- Interaktiv Sinf Tanlash Bo'limi -->
+            <div class="p-5 bg-gradient-to-br from-blue-50/70 to-indigo-50/40 dark:from-gray-700/50 dark:to-gray-800/60 rounded-2xl border border-blue-200/80 dark:border-gray-600 space-y-4">
+                <div class="flex items-center justify-between">
+                    <label class="block text-sm font-bold text-gray-900 dark:text-white flex items-center">
+                        <i data-lucide="school" class="w-4 h-4 mr-2 text-brand-600"></i>
+                        Qaysi sinfda o‘qiysiz? *
+                    </label>
+                    <span id="selectedClassBadge" class="hidden px-3 py-1 rounded-xl text-xs font-black bg-emerald-600 text-white shadow-sm flex items-center gap-1">
+                        <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                        <span id="selectedClassName">1-A</span>
+                    </span>
+                </div>
 
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Sinfingiz *</label>
-                {{ form.classroom }}
-                {% if form.classroom.errors %}<p class="text-xs text-rose-500 mt-1">{{ form.classroom.errors.0 }}</p>{% endif %}
+                <!-- 1-Qadam: Sinf raqamini tanlash (1 dan 11 gacha) -->
+                <div>
+                    <p class="text-xs font-semibold text-gray-600 dark:text-gray-300 mb-2">
+                        1. Sinfingiz raqamini bosing (1-11):
+                    </p>
+                    <div class="grid grid-cols-6 sm:grid-cols-11 gap-1.5" id="gradeButtons">
+                        {% for g in "1234567891011"|make_list %}
+                        {% endfor %}
+                        <!-- 1-11 tugmalar -->
+                        <button type="button" onclick="selectGrade(1)" data-grade="1" class="grade-btn py-2 text-xs font-bold rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:border-brand-500 hover:text-brand-600 transition-all">1</button>
+                        <button type="button" onclick="selectGrade(2)" data-grade="2" class="grade-btn py-2 text-xs font-bold rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:border-brand-500 hover:text-brand-600 transition-all">2</button>
+                        <button type="button" onclick="selectGrade(3)" data-grade="3" class="grade-btn py-2 text-xs font-bold rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:border-brand-500 hover:text-brand-600 transition-all">3</button>
+                        <button type="button" onclick="selectGrade(4)" data-grade="4" class="grade-btn py-2 text-xs font-bold rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:border-brand-500 hover:text-brand-600 transition-all">4</button>
+                        <button type="button" onclick="selectGrade(5)" data-grade="5" class="grade-btn py-2 text-xs font-bold rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:border-brand-500 hover:text-brand-600 transition-all">5</button>
+                        <button type="button" onclick="selectGrade(6)" data-grade="6" class="grade-btn py-2 text-xs font-bold rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:border-brand-500 hover:text-brand-600 transition-all">6</button>
+                        <button type="button" onclick="selectGrade(7)" data-grade="7" class="grade-btn py-2 text-xs font-bold rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:border-brand-500 hover:text-brand-600 transition-all">7</button>
+                        <button type="button" onclick="selectGrade(8)" data-grade="8" class="grade-btn py-2 text-xs font-bold rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:border-brand-500 hover:text-brand-600 transition-all">8</button>
+                        <button type="button" onclick="selectGrade(9)" data-grade="9" class="grade-btn py-2 text-xs font-bold rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:border-brand-500 hover:text-brand-600 transition-all">9</button>
+                        <button type="button" onclick="selectGrade(10)" data-grade="10" class="grade-btn py-2 text-xs font-bold rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:border-brand-500 hover:text-brand-600 transition-all">10</button>
+                        <button type="button" onclick="selectGrade(11)" data-grade="11" class="grade-btn py-2 text-xs font-bold rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:border-brand-500 hover:text-brand-600 transition-all">11</button>
+                    </div>
+                </div>
+
+                <!-- 2-Qadam: Harf yoki Yo'nalish tanlash -->
+                <div id="subSelectionContainer" class="hidden pt-2 border-t border-blue-200/60 dark:border-gray-700">
+                    <p id="subSelectionLabel" class="text-xs font-semibold text-gray-600 dark:text-gray-300 mb-2">
+                        2. Harfni tanlang:
+                    </p>
+                    <div id="subButtonsGrid" class="flex flex-wrap gap-2">
+                        <!-- JS orqali dinamik to'ldiriladi -->
+                    </div>
+                </div>
+
+                <!-- Haqiqiy Form Select (Sinxron ishlaydi) -->
+                <div class="pt-2">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-[11px] text-gray-500 dark:text-gray-400">Yoki ro‘yxatdan to‘g‘ridan-to‘g‘ri tanlang:</span>
+                    </div>
+                    {{ form.classroom }}
+                    {% if form.classroom.errors %}<p class="text-xs text-rose-500 mt-1">{{ form.classroom.errors.0 }}</p>{% endif %}
+                </div>
             </div>
 
             <div>
@@ -42,16 +95,135 @@
                 {{ form.avatar }}
             </div>
 
-            <div class="pt-4">
+            <div class="pt-2">
                 <button 
                     type="submit" 
+                    id="submitBtn"
                     class="w-full flex items-center justify-center py-4 px-6 rounded-2xl text-white bg-brand-600 hover:bg-brand-700 focus:ring-4 focus:ring-brand-500/30 text-base font-bold shadow-lg shadow-brand-600/30 hover:shadow-xl transition-all duration-200"
                 >
-                    <span>Saqlash va tizimga kirish</span>
+                    <span>Saqlash va sinfga qo‘shilish</span>
                     <i data-lucide="check" class="w-5 h-5 ml-2"></i>
                 </button>
             </div>
         </form>
     </div>
 </div>
+
+<script>
+    let currentGrade = null;
+    const classroomSelect = document.getElementById('id_classroom');
+    const gradeButtons = document.querySelectorAll('.grade-btn');
+    const subContainer = document.getElementById('subSelectionContainer');
+    const subLabel = document.getElementById('subSelectionLabel');
+    const subGrid = document.getElementById('subButtonsGrid');
+    const badge = document.getElementById('selectedClassBadge');
+    const badgeName = document.getElementById('selectedClassName');
+
+    // 1-bosqich: Sinf raqamini tanlash
+    function selectGrade(grade) {
+        currentGrade = grade;
+
+        // Tugmalar holatini yangilash
+        gradeButtons.forEach(btn => {
+            if (parseInt(btn.getAttribute('data-grade')) === grade) {
+                btn.className = "grade-btn py-2 text-xs font-black rounded-xl bg-brand-600 text-white shadow-md transition-all scale-105";
+            } else {
+                btn.className = "grade-btn py-2 text-xs font-bold rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:border-brand-500 hover:text-brand-600 transition-all";
+            }
+        });
+
+        subContainer.classList.remove('hidden');
+        subGrid.innerHTML = '';
+
+        if (grade >= 1 && grade <= 6) {
+            // 1-6 sinflar uchun harflar: A, B, C, D, F
+            subLabel.innerHTML = `2. <strong class="text-brand-600">${grade}-sinf</strong> uchun harfni tanlang:`;
+            const letters = ['A', 'B', 'C', 'D', 'F'];
+            letters.forEach(letter => {
+                const className = `${grade}-${letter}`;
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = "sub-btn px-4 py-2 text-xs font-bold rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 hover:border-brand-500 hover:text-brand-600 transition-all";
+                btn.innerHTML = `<span class="text-sm font-black">${letter}</span> <span class="text-[10px] opacity-70">(${className})</span>`;
+                btn.onclick = () => selectExactClass(className, btn);
+                subGrid.appendChild(btn);
+            });
+        } else {
+            // 7-11 sinflar uchun yo'nalishlar: Ijtimoiy, Aniq, Tabiiy
+            subLabel.innerHTML = `2. <strong class="text-brand-600">${grade}-sinf</strong> uchun yo‘nalishingizni tanlang:`;
+            const specialties = [
+                { name: 'Ijtimoiy', icon: 'book-open' },
+                { name: 'Aniq', icon: 'calculator' },
+                { name: 'Tabiiy', icon: 'leaf' }
+            ];
+            specialties.forEach(spec => {
+                const className = `${grade}-${spec.name}`;
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = "sub-btn px-4 py-2.5 text-xs font-bold rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 hover:border-brand-500 hover:text-brand-600 transition-all flex items-center gap-1.5";
+                btn.innerHTML = `<span>${spec.name}</span> <span class="text-[10px] opacity-70">(${className})</span>`;
+                btn.onclick = () => selectExactClass(className, btn);
+                subGrid.appendChild(btn);
+            });
+        }
+    }
+
+    // 2-bosqich: To'liq sinfni tanlash
+    function selectExactClass(className, activeBtn) {
+        // Sub tugmalar holatini yangilash
+        document.querySelectorAll('.sub-btn').forEach(btn => {
+            btn.className = "sub-btn px-4 py-2 text-xs font-bold rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 hover:border-brand-500 hover:text-brand-600 transition-all";
+        });
+        if (activeBtn) {
+            activeBtn.className = "sub-btn px-4 py-2 text-xs font-black rounded-xl bg-emerald-600 text-white shadow-md transition-all scale-105";
+        }
+
+        // Select option ni topish va belgilash
+        let found = false;
+        for (let i = 0; i < classroomSelect.options.length; i++) {
+            if (classroomSelect.options[i].text.trim() === className || classroomSelect.options[i].text.includes(className)) {
+                classroomSelect.selectedIndex = i;
+                found = true;
+                break;
+            }
+        }
+
+        // Ko'rsatkich belgini yangilash
+        badge.classList.remove('hidden');
+        badgeName.textContent = className + " sinfi";
+        if (window.lucide) lucide.createIcons();
+    }
+
+    // Select o'zgarganda tugmalarni ham moslashtirish
+    classroomSelect.addEventListener('change', function() {
+        const text = this.options[this.selectedIndex].text.trim();
+        if (text && text !== "— Sinfingizni tanlang —") {
+            const parts = text.split('-');
+            if (parts.length >= 2) {
+                const gr = parseInt(parts[0]);
+                if (gr) {
+                    selectGrade(gr);
+                    setTimeout(() => {
+                        const subBtns = document.querySelectorAll('.sub-btn');
+                        subBtns.forEach(btn => {
+                            if (btn.textContent.includes(text)) {
+                                btn.className = "sub-btn px-4 py-2 text-xs font-black rounded-xl bg-emerald-600 text-white shadow-md transition-all scale-105";
+                            }
+                        });
+                        badge.classList.remove('hidden');
+                        badgeName.textContent = text + " sinfi";
+                    }, 50);
+                }
+            }
+        }
+    });
+
+    // Sahifa yuklanganda mavjud qiymat bo'lsa
+    document.addEventListener('DOMContentLoaded', function() {
+        if (classroomSelect.value) {
+            classroomSelect.dispatchEvent(new Event('change'));
+        }
+        if (window.lucide) lucide.createIcons();
+    });
+</script>
 {% endblock %}

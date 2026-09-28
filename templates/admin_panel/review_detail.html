@@ -1,17 +1,36 @@
 {% extends 'base.html' %}
 
-{% block title %}Vazifani Tekshirish — Admin{% endblock %}
+{% block title %}Vazifani Tekshirish — Admin Panel{% endblock %}
 
 {% block content %}
 {% include 'components/admin_nav.html' %}
 
-<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 pb-12">
 
     <!-- Back Button -->
-    <a href="{% url 'admin_submissions' %}" class="inline-flex items-center text-sm font-semibold text-gray-500 hover:text-brand-600 dark:text-gray-400 dark:hover:text-white transition-colors">
-        <i data-lucide="arrow-left" class="w-4 h-4 mr-1.5"></i>
-        Topshiriqlar ro‘yxatiga qaytish
-    </a>
+    <div class="flex items-center justify-between">
+        <a href="{% url 'admin_submissions' %}" class="inline-flex items-center text-sm font-semibold text-gray-500 hover:text-brand-600 dark:text-gray-400 dark:hover:text-white transition-colors">
+            <i data-lucide="arrow-left" class="w-4 h-4 mr-1.5"></i>
+            Topshiriqlar ro‘yxatiga qaytish
+        </a>
+
+        {% if is_read_only %}
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-700">
+            <i data-lucide="eye" class="w-3.5 h-3.5 text-amber-600"></i>
+            Administrator: Ko‘rish rejimi
+        </span>
+        {% endif %}
+    </div>
+
+    {% if is_read_only %}
+    <!-- Read Only Banner -->
+    <div class="p-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/70 rounded-2xl flex items-start gap-3 shadow-xs">
+        <i data-lucide="shield-alert" class="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5"></i>
+        <div class="text-xs sm:text-sm text-amber-900 dark:text-amber-200 leading-relaxed">
+            <strong>Administrator diqqatiga:</strong> Ushbu sahifada siz o‘quvchi javoblari va o‘qituvchi bahosini <u>faqat ko‘rish</u> huquqiga egasiz. Baholash va xulosa berish vakolati biriktirilgan fanning o‘qituvchisiga tegishli.
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Task Info Banner -->
     <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 border border-gray-200 dark:border-gray-700 shadow-xs space-y-4">
@@ -49,7 +68,7 @@
         </h3>
 
         {% if submission.submission_text %}
-        <div class="p-4 bg-gray-50 dark:bg-gray-700/40 rounded-2xl text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line border border-gray-200/60 dark:border-gray-700">
+        <div class="p-4 bg-gray-50 dark:bg-gray-700/40 rounded-2xl text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line border border-gray-200/60 dark:border-gray-700 font-medium">
             {{ submission.submission_text }}
         </div>
         {% else %}
@@ -94,13 +113,40 @@
         </div>
     </div>
 
-    <!-- Review Form -->
+    <!-- Review Block -->
     <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 border border-gray-200 dark:border-gray-700 shadow-xs space-y-4">
         <h3 class="text-base font-bold text-gray-900 dark:text-white flex items-center">
             <i data-lucide="edit-3" class="w-4 h-4 mr-2 text-emerald-600"></i>
             O‘qituvchi tekshiruv xulosasi va baholash
         </h3>
 
+        {% if is_read_only %}
+        <!-- READ ONLY VIEW FOR ADMINISTRATOR -->
+        <div class="p-5 bg-gray-50 dark:bg-gray-700/40 rounded-2xl border border-gray-200 dark:border-gray-600 space-y-3">
+            <div class="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-gray-600">
+                <span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Qo‘yilgan holat:</span>
+                <span class="inline-flex items-center px-3 py-1 rounded-xl text-xs font-bold border {{ task.badge_color }}">
+                    {{ task.get_status_display }}
+                </span>
+            </div>
+
+            <div>
+                <span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase block mb-1">O‘qituvchi izohi va bahosi:</span>
+                <div class="text-sm font-medium text-gray-800 dark:text-gray-200 italic p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700">
+                    {{ submission.teacher_feedback|default:"O‘qituvchi tomonidan hali izoh yozilmagan." }}
+                </div>
+            </div>
+
+            {% if submission.reviewed_at %}
+            <div class="text-xs text-gray-400 pt-2 flex items-center justify-between">
+                <span>Tekshirdi: <strong>{{ submission.reviewed_by.first_name|default:submission.reviewed_by.username }}</strong></span>
+                <span>Vaqti: {{ submission.reviewed_at|date:"d.m.Y H:i" }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        {% else %}
+        <!-- EDITABLE FORM FOR TEACHER -->
         <form method="POST" action="" class="space-y-4">
             {% csrf_token %}
 
@@ -128,11 +174,12 @@
                 >{{ submission.teacher_feedback }}</textarea>
             </div>
 
-            <button type="submit" class="w-full py-3 px-6 rounded-xl text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-md transition-all flex items-center justify-center">
+            <button type="submit" class="w-full py-3.5 px-6 rounded-2xl text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-md transition-all flex items-center justify-center">
                 <i data-lucide="check" class="w-4 h-4 mr-2"></i>
                 Saqlash va o‘quvchiga yuborish
             </button>
         </form>
+        {% endif %}
     </div>
 
 </div>

@@ -9,7 +9,7 @@ from core.utils.otp_service import normalize_phone
 
 class StudentRegisterProfileForm(forms.ModelForm):
     classroom = forms.ModelChoiceField(
-        queryset=Classroom.objects.filter(is_active=True),
+        queryset=Classroom.objects.filter(is_active=True).order_by('grade_level', 'name'),
         required=True,
         empty_label="— Sinfingizni tanlang —",
         widget=forms.Select(attrs={
@@ -36,8 +36,15 @@ class StudentRegisterProfileForm(forms.ModelForm):
 
 
 class AssignmentForm(forms.ModelForm):
+    subject = forms.ModelChoiceField(
+        queryset=Subject.objects.filter(is_active=True).order_by('name'),
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500'
+        }),
+        label="Fan"
+    )
     classrooms = forms.ModelMultipleChoiceField(
-        queryset=Classroom.objects.filter(is_active=True),
+        queryset=Classroom.objects.filter(is_active=True).order_by('grade_level', 'name'),
         widget=forms.CheckboxSelectMultiple(attrs={'class': 'rounded text-blue-600 focus:ring-blue-500'}),
         label="Biriktiriladigan sinflar"
     )
@@ -84,6 +91,16 @@ class AssignmentForm(forms.ModelForm):
             }),
             'is_active': forms.CheckboxInput(attrs={'class': 'rounded text-blue-600 focus:ring-blue-500 h-5 w-5'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from django.utils import timezone
+        from datetime import timedelta
+        if not self.is_bound:
+            now = timezone.now()
+            self.fields['assigned_date'].initial = now.date().strftime('%Y-%m-%d')
+            self.fields['due_date'].initial = (now + timedelta(days=3)).strftime('%Y-%m-%dT18:00')
+            self.fields['is_active'].initial = True
 
 
 class SubmissionForm(forms.ModelForm):
@@ -154,3 +171,60 @@ class SubjectForm(forms.ModelForm):
             'icon': forms.TextInput(attrs={'placeholder': 'book, calculator, globe...', 'class': 'w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'rounded text-blue-600 focus:ring-blue-500 h-5 w-5'}),
         }
+
+
+class TeacherCreateForm(forms.Form):
+    full_name = forms.CharField(
+        max_length=200,
+        label="O'qituvchi F.I.O",
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Masalan: Olimova Dilnoza Bahodirovna',
+            'class': 'w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500'
+        })
+    )
+    phone_number = forms.CharField(
+        max_length=20,
+        required=False,
+        label="Telefon raqami",
+        widget=forms.TextInput(attrs={
+            'placeholder': '+998901234567',
+            'class': 'w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500'
+        })
+    )
+    subject = forms.ModelChoiceField(
+        queryset=Subject.objects.filter(is_active=True).order_by('name'),
+        required=False,
+        empty_label="— Fan tanlang (ixtiyoriy) —",
+        label="Biriktirilgan fan",
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500'
+        })
+    )
+    classrooms = forms.ModelMultipleChoiceField(
+        queryset=Classroom.objects.filter(is_active=True).order_by('grade_level', 'name'),
+        required=False,
+        label="Biriktirilgan sinflar",
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'rounded text-blue-600 focus:ring-blue-500'})
+    )
+    username = forms.CharField(
+        max_length=50,
+        label="Login (foydalanuvchi nomi)",
+        widget=forms.TextInput(attrs={
+            'placeholder': 'masalan: ustoz_matematika',
+            'class': 'w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500'
+        })
+    )
+    password = forms.CharField(
+        max_length=100,
+        label="Parol",
+        widget=forms.TextInput(attrs={
+            'placeholder': 'O\'qituvchi uchun parol belgilang',
+            'class': 'w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500'
+        })
+    )
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username').strip()
+        if User.objects.filter(username__iexact=username).exists():
+            raise forms.ValidationError("Ushbu login band! Boshqa login tanlang.")
+        return username

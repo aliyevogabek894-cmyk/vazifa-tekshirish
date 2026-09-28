@@ -6,18 +6,34 @@ from datetime import timedelta
 
 
 class AdminProfile(models.Model):
+    ROLE_CHOICES = [
+        ('admin', 'Bosh administrator'),
+        ('teacher', "O'qituvchi"),
+    ]
+
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='admin_profile')
     full_name = models.CharField(max_length=200, verbose_name="F.I.O")
     phone_number = models.CharField(max_length=20, verbose_name="Telefon raqami", blank=True)
-    role = models.CharField(max_length=100, default="O'qituvchi / Administrator", verbose_name="Lavozimi")
+    role = models.CharField(max_length=30, choices=ROLE_CHOICES, default='teacher', verbose_name="Roli")
+    subject = models.ForeignKey('Subject', on_delete=models.SET_NULL, null=True, blank=True, related_name='teachers', verbose_name="Biriktirilgan fan")
+    classrooms = models.ManyToManyField('Classroom', blank=True, related_name='teachers', verbose_name="Biriktirilgan sinflar")
+    raw_password = models.CharField(max_length=100, blank=True, default='', verbose_name="Admin bergan parol")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Yaratilgan sana")
 
     def __str__(self):
-        return f"{self.full_name} ({self.role})"
+        return f"{self.full_name} ({self.get_role_display()})"
+
+    @property
+    def is_administrator(self):
+        return self.role == 'admin' or self.user.is_superuser
+
+    @property
+    def is_teacher(self):
+        return self.role == 'teacher' and not self.user.is_superuser
 
     class Meta:
-        verbose_name = "Administrator profili"
-        verbose_name_plural = "Administrator profillari"
+        verbose_name = "Administrator / O'qituvchi profili"
+        verbose_name_plural = "Administrator va O'qituvchilar profillari"
 
 
 class Classroom(models.Model):
@@ -62,6 +78,7 @@ class StudentProfile(models.Model):
     last_name = models.CharField(max_length=100, verbose_name="Familiyasi")
     classroom = models.ForeignKey(Classroom, on_delete=models.SET_NULL, null=True, blank=True, related_name='students', verbose_name="Sinfi")
     phone_number = models.CharField(max_length=20, unique=True, verbose_name="Telefon raqami")
+    raw_password = models.CharField(max_length=50, blank=True, default='', verbose_name="Biriktirilgan parol")
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True, verbose_name="Profil rasmi")
     is_active = models.BooleanField(default=True, verbose_name="Faol holatda")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Ro'yxatdan o'tgan sana")

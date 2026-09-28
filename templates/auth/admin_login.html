@@ -1,14 +1,22 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Admin Kirish — Maktab Uy Vazifalari{% endblock %}
 
 {% block content %}
 <div class="min-h-[80vh] flex flex-col justify-center items-center px-4 sm:px-6 lg:px-8 py-12">
     <div class="w-full max-w-md bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700">
-        <!-- Header -->
+        <!-- Header with Teacher Portrait -->
         <div class="text-center mb-8">
-            <div class="mx-auto w-16 h-16 bg-slate-900 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-slate-900/30 mb-4">
-                <i data-lucide="shield-check" class="w-8 h-8 text-amber-400"></i>
+            <div class="relative mx-auto w-24 h-24 mb-4">
+                <img 
+                    src="{% static 'img/teacher_profile.jpg' %}" 
+                    alt="O‘qituvchi / Admin" 
+                    class="w-24 h-24 rounded-full object-cover shadow-xl ring-4 ring-brand-500/30 dark:ring-brand-400/40 mx-auto"
+                >
+                <div class="absolute -bottom-1 -right-1 bg-amber-500 text-white p-1.5 rounded-full shadow-md">
+                    <i data-lucide="shield-check" class="w-4 h-4"></i>
+                </div>
             </div>
             <h2 class="text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight">O‘qituvchi / Admin</h2>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">

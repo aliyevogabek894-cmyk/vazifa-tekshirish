@@ -5,6 +5,7 @@ from core.views import auth_views, student_views, admin_views, reports_views, ex
 urlpatterns = [
     # Auth
     path('login/', auth_views.student_login_view, name='login'),
+    path('password-issued/', auth_views.student_password_issued_view, name='student_password_issued'),
     path('verify-otp/', auth_views.verify_otp_view, name='verify_otp'),
     path('register-profile/', auth_views.register_profile_view, name='register_profile'),
     path('admin-login/', auth_views.admin_login_view, name='admin_login'),
@@ -17,6 +18,7 @@ urlpatterns = [
 
     # Admin Panel
     path('admin-panel/', admin_views.admin_dashboard, name='admin_dashboard'),
+    path('admin-panel/teachers/', admin_views.teachers_view, name='admin_teachers'),
     path('admin-panel/classrooms/', admin_views.classrooms_view, name='admin_classrooms'),
     path('admin-panel/students/', admin_views.students_view, name='admin_students'),
     path('admin-panel/students/import/', admin_views.student_excel_import_view, name='admin_students_import'),

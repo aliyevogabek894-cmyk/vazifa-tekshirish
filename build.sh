@@ -10,5 +10,8 @@ python manage.py collectstatic --noinput
 echo "=== Migratsiyalar bajarilmoqda ==="
 python manage.py migrate --noinput
 
+echo "=== Boshlang'ich maktab sinflari va fanlari yaratilmoqda ==="
+python manage.py setup_school_data
+
 echo "=== Boshlang'ich test ma'lumotlari yaratilmoqda ==="
 python manage.py seed_data

@@ -71,6 +71,7 @@
                         <th class="px-6 py-4">F.I.O</th>
                         <th class="px-6 py-4">Sinf</th>
                         <th class="px-6 py-4">Telefon raqami</th>
+                        <th class="px-6 py-4">Parol</th>
                         <th class="px-6 py-4">Holati</th>
                         <th class="px-6 py-4 text-right">Amallar</th>
                     </tr>
@@ -93,6 +94,9 @@
                         <td class="px-6 py-4 text-xs font-mono whitespace-nowrap">
                             {{ st.phone_number }}
                         </td>
+                        <td class="px-6 py-4 text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap bg-emerald-50/40 dark:bg-emerald-950/20">
+                            {{ st.raw_password|default:"123456" }}
+                        </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             {% if st.is_active %}
                                 <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
@@ -104,7 +108,17 @@
                                 </span>
                             {% endif %}
                         </td>
-                        <td class="px-6 py-4 text-right whitespace-nowrap space-x-2">
+                        <td class="px-6 py-4 text-right whitespace-nowrap space-x-1.5">
+                            <!-- Reset Password -->
+                            <form method="POST" action="" class="inline-block" onsubmit="return confirm('{{ st.full_name }} uchun yangi parol generatsiya qilinsinmi?');">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="reset_password">
+                                <input type="hidden" name="student_id" value="{{ st.id }}">
+                                <button type="submit" class="px-2.5 py-1.5 rounded-lg text-xs font-bold border border-amber-200 text-amber-700 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800" title="Yangi parol berish">
+                                    <i data-lucide="key" class="w-3.5 h-3.5 inline mr-0.5"></i> Parol
+                                </button>
+                            </form>
+
                             <!-- Toggle active/inactive -->
                             <form method="POST" action="" class="inline-block">
                                 {% csrf_token %}
@@ -119,7 +133,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="6" class="px-6 py-12 text-center text-gray-400 text-sm">
+                        <td colspan="7" class="px-6 py-12 text-center text-gray-400 text-sm">
                             O‘quvchilar topilmadi.
                         </td>
                     </tr>
