@@ -159,3 +159,59 @@ class SchoolClassesAndAssignmentsTests(TestCase):
         self.assertEqual(task.status, 'approved')
         self.assertEqual(task.submission.review_status, 'approved')
         self.assertEqual(task.submission.teacher_feedback, "Barakalla, 5 baho!")
+
+    def test_student_photo_submission_and_admin_view(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        # Yangi o'quvchi
+        user_std = User.objects.create_user(username='std_photo', password='TestPassword123')
+        student = StudentProfile.objects.create(
+            user=user_std,
+            first_name='Fotima',
+            last_name='Xoliqova',
+            classroom=self.class_1a,
+            phone_number='+998901112233'
+        )
+        ass = Assignment.objects.create(
+            title="Daftardagi yozuv vazifasi",
+            subject=self.sub_matematika,
+            due_date=timezone.now() + timedelta(days=2),
+            created_by=self.teacher_user
+        )
+        ass.classrooms.add(self.class_1a)
+        task = StudentAssignment.objects.create(assignment=ass, student=student)
+
+        # O'quvchi login qiladi
+        self.client.login(username='std_photo', password='TestPassword123')
+
+        # O'quvchi daftarning 2 ta sahifasini rasmga olib yuboradi
+        img1 = SimpleUploadedFile("daftar_sahifa1.jpg", b"image data 1", content_type="image/jpeg")
+        img2 = SimpleUploadedFile("daftar_sahifa2.jpg", b"image data 2", content_type="image/jpeg")
+
+        sub_res = self.client.post(
+            reverse('student_assignment_detail', kwargs={'task_id': task.id}),
+            {
+                'action_type': 'submit_work',
+                'submission_text': "Daftarning 2 ta betini rasmga tushirdim",
+                'files': [img1, img2]
+            }
+        )
+        self.assertEqual(sub_res.status_code, 302)
+
+        task.refresh_from_db()
+        self.assertEqual(task.status, 'submitted')
+        self.assertFalse(task.completed_without_files)
+        self.assertEqual(task.submission.attachments.count(), 2)
+
+        # Admin tekshiradi va rasmlarni ko'ra oladi
+        self.client.login(username='maktab_admini', password='AdminPassword123')
+        rev_page = self.client.get(reverse('admin_review_submission', kwargs={'task_id': task.id}))
+        self.assertEqual(rev_page.status_code, 200)
+        self.assertContains(rev_page, "Daftarning 2 ta betini rasmga tushirdim")
+        self.assertContains(rev_page, "secure-media/submission")
+
+        # Rasm URL-iga kirib ko'radi
+        first_att = task.submission.attachments.first()
+        media_res = self.client.get(reverse('secure_submission_media', kwargs={'attachment_id': first_att.id}))
+        self.assertEqual(media_res.status_code, 200)
+        self.assertEqual(media_res['Content-Type'], 'image/jpeg')
+

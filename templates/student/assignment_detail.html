@@ -94,7 +94,7 @@
                     {% endif %}
                 </span>
             </div>
-            <form method="POST" action="">
+            <form method="POST" action="" id="quickDoneForm" onsubmit="return handleQuickDoneSubmit(event)">
                 {% csrf_token %}
                 <input type="hidden" name="action_type" value="mark_done">
                 <button type="submit" class="inline-flex items-center px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-sm
@@ -104,7 +104,7 @@
                         bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-600 hover:text-white border border-emerald-300
                     {% endif %}">
                     <i data-lucide="check" class="w-4 h-4 mr-1.5"></i>
-                    <span>{% if task.status in 'completed,approved,submitted' %}Vazifa bajarilgan deb belgilangan{% else %}Vazifani bajardim{% endif %}</span>
+                    <span>{% if task.status in 'completed,approved,submitted' %}Vazifa bajarilgan deb belgilangan{% else %}Vazifani bajardim (faylsiz){% endif %}</span>
                 </button>
             </form>
         </div>
@@ -128,92 +128,157 @@
 
     <!-- Answer Submission Card -->
     <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm space-y-5">
-        <div class="flex items-center space-x-2">
-            <i data-lucide="send" class="w-5 h-5 text-brand-600"></i>
-            <h2 class="text-lg font-bold text-gray-900 dark:text-white">Javob yuborish</h2>
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <i data-lucide="send" class="w-5 h-5 text-brand-600"></i>
+                <h2 class="text-lg font-bold text-gray-900 dark:text-white">Javob yuborish va rasm yuklash</h2>
+            </div>
+            <span class="text-xs text-brand-700 dark:text-brand-300 font-medium bg-brand-50 dark:bg-brand-950/50 px-2.5 py-1 rounded-lg">
+                Daftarni rasmga oling
+            </span>
         </div>
 
-        <form method="POST" enctype="multipart/form-data" action="" class="space-y-5">
+        <form method="POST" enctype="multipart/form-data" action="" id="submissionForm" onsubmit="return handleSubmissionSubmit(event)" class="space-y-5">
             {% csrf_token %}
             <input type="hidden" name="action_type" value="submit_work">
+
+            <!-- Real multi-file input submitted with form -->
+            <input type="file" id="realFilesInput" name="files" multiple class="hidden">
 
             <!-- Text Answer -->
             <div>
                 <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                    Matnli javob yoki izoh
+                    Matnli javob yoki izoh (ixtiyoriy)
                 </label>
                 <textarea 
                     name="submission_text" 
+                    id="submissionTextInput"
                     rows="3" 
-                    placeholder="Vazifa bo‘yicha yozgan javobingiz yoki tushuntirish..." 
+                    placeholder="Vazifa bo‘yicha yozgan javobingiz yoki o‘qituvchiga izoh..." 
                     class="w-full px-4 py-3 rounded-2xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/40 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none placeholder:text-gray-400"
                 >{{ submission.submission_text }}</textarea>
             </div>
 
             <!-- Upload Options -->
             <div>
-                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                    Fayllar yuklash (Rasm, Video, PDF, Word)
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center justify-between">
+                    <span>Daftardagi vazifani rasmga olish / Fayl yuklash</span>
+                    <span id="selectedCountBadge" class="text-xs font-bold text-brand-600 dark:text-brand-400 hidden">
+                        0 ta fayl tanlandi
+                    </span>
                 </label>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <!-- Camera Capture Button (Mobile Friendly) -->
-                    <label class="flex items-center justify-center p-4 rounded-2xl border-2 border-dashed border-brand-300 dark:border-brand-700 bg-brand-50/50 dark:bg-brand-950/20 hover:bg-brand-50 cursor-pointer transition-all">
-                        <div class="text-center">
-                            <i data-lucide="camera" class="w-6 h-6 mx-auto text-brand-600 mb-1"></i>
-                            <span class="text-xs font-bold text-brand-700 dark:text-brand-300 block">Kamera orqali suratga olish</span>
-                            <span class="text-[10px] text-gray-500">Daftarni to‘g‘ridan-to‘g‘ri rasmga tushirish</span>
-                        </div>
-                        <input type="file" name="files" accept="image/*" capture="environment" class="hidden" onchange="handleFileSelect(this)">
-                    </label>
+                <!-- Hidden inputs for triggers -->
+                <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden" onchange="onFilesAdded(this.files, 'kamera')">
+                <input type="file" id="galleryInput" multiple accept="image/*,.pdf,.doc,.docx,.txt" class="hidden" onchange="onFilesAdded(this.files, 'galereya')">
 
-                    <!-- Gallery / Multiple Files -->
-                    <label class="flex items-center justify-center p-4 rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/30 hover:bg-gray-100 cursor-pointer transition-all">
-                        <div class="text-center">
-                            <i data-lucide="upload-cloud" class="w-6 h-6 mx-auto text-gray-500 mb-1"></i>
-                            <span class="text-xs font-bold text-gray-700 dark:text-gray-300 block">Fayllar yoki Rasmlar tanlash</span>
-                            <span class="text-[10px] text-gray-500">Bir nechta rasm, PDF, Word tanlash mumkin</span>
+                <!-- Action buttons -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <!-- Camera Button (Mobile friendly) -->
+                    <button 
+                        type="button" 
+                        onclick="document.getElementById('cameraInput').click()" 
+                        class="relative flex items-center justify-center p-4 rounded-2xl border-2 border-dashed border-brand-400 dark:border-brand-600 bg-brand-50/70 dark:bg-brand-950/30 hover:bg-brand-100 dark:hover:bg-brand-900/40 cursor-pointer transition-all active:scale-[0.98] text-left group"
+                    >
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 rounded-xl bg-brand-600 text-white flex items-center justify-center shadow-md shadow-brand-600/30 group-hover:scale-105 transition-transform flex-shrink-0">
+                                <i data-lucide="camera" class="w-6 h-6"></i>
+                            </div>
+                            <div>
+                                <span class="text-sm font-bold text-brand-800 dark:text-brand-200 block">Kamera orqali suratga olish</span>
+                                <span class="text-xs text-gray-500 dark:text-gray-400 block mt-0.5">Daftarni rasmga oling (har bir sahifani)</span>
+                            </div>
                         </div>
-                        <input type="file" name="files" multiple accept="image/*,video/*,.pdf,.doc,.docx,.txt" class="hidden" onchange="handleFileSelect(this)">
-                    </label>
+                    </button>
+
+                    <!-- Gallery / Files Button -->
+                    <button 
+                        type="button" 
+                        onclick="document.getElementById('galleryInput').click()" 
+                        class="relative flex items-center justify-center p-4 rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/30 hover:bg-gray-100 dark:hover:bg-gray-700/50 cursor-pointer transition-all active:scale-[0.98] text-left group"
+                    >
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 rounded-xl bg-gray-600 text-white flex items-center justify-center shadow-md shadow-gray-600/20 group-hover:scale-105 transition-transform flex-shrink-0">
+                                <i data-lucide="images" class="w-6 h-6"></i>
+                            </div>
+                            <div>
+                                <span class="text-sm font-bold text-gray-800 dark:text-gray-200 block">Galereyadan tanlash</span>
+                                <span class="text-xs text-gray-500 dark:text-gray-400 block mt-0.5">Mavjud rasmlar yoki hujjatlar (PDF, Word)</span>
+                            </div>
+                        </div>
+                    </button>
                 </div>
 
-                <!-- Selected files preview list -->
-                <div id="filePreviewList" class="mt-3 space-y-2 hidden">
-                    <p class="text-xs font-bold text-gray-600 dark:text-gray-400">Yuborish uchun tanlangan fayllar:</p>
-                    <ul id="fileNames" class="text-xs text-brand-600 dark:text-brand-400 space-y-1"></ul>
+                <!-- Drag & Drop Zone for Desktop -->
+                <div 
+                    id="dropZone"
+                    ondragover="handleDragOver(event)" 
+                    ondragleave="handleDragLeave(event)" 
+                    ondrop="handleDrop(event)"
+                    onclick="document.getElementById('galleryInput').click()"
+                    class="mt-3 p-4 border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-brand-400 dark:hover:border-brand-500 rounded-2xl bg-gray-50/50 dark:bg-gray-800/40 text-center cursor-pointer transition-all hidden sm:block"
+                >
+                    <i data-lucide="upload-cloud" class="w-6 h-6 mx-auto text-gray-400 mb-1"></i>
+                    <p class="text-xs text-gray-600 dark:text-gray-300 font-medium">Yoki fayllarni shu yerga sudrab olib kelib tashlang</p>
+                </div>
+
+                <!-- Selected Files Preview Container -->
+                <div id="filePreviewList" class="mt-4 p-4 rounded-2xl bg-brand-50/40 dark:bg-brand-950/20 border border-brand-200 dark:border-brand-800/40 hidden">
+                    <div class="flex items-center justify-between mb-3">
+                        <p class="text-xs font-bold text-brand-900 dark:text-brand-200 flex items-center">
+                            <i data-lucide="check-circle-2" class="w-4 h-4 mr-1.5 text-emerald-600"></i>
+                            Yuboriladigan rasmlar va fayllar (<span id="previewCountText">0</span> ta):
+                        </p>
+                        <button type="button" onclick="clearAllSelectedFiles()" class="text-[11px] text-rose-600 hover:underline font-semibold">
+                            Barchasini tozalash
+                        </button>
+                    </div>
+                    <div id="fileThumbnails" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"></div>
+                </div>
+
+                <!-- Error notice banner -->
+                <div id="uploadErrorNotice" class="mt-3 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/50 text-rose-700 dark:text-rose-300 text-xs hidden flex items-center">
+                    <i data-lucide="alert-circle" class="w-4 h-4 mr-2 flex-shrink-0 text-rose-600"></i>
+                    <span id="uploadErrorNoticeText"></span>
                 </div>
             </div>
 
+            <!-- Submit Button with loading state -->
             <button 
                 type="submit" 
-                class="w-full flex items-center justify-center py-3.5 px-6 rounded-2xl text-white bg-brand-600 hover:bg-brand-700 focus:ring-4 focus:ring-brand-500/30 font-bold text-base shadow-lg shadow-brand-600/20 transition-all"
+                id="submitWorkButton"
+                class="w-full flex items-center justify-center py-3.5 px-6 rounded-2xl text-white bg-brand-600 hover:bg-brand-700 focus:ring-4 focus:ring-brand-500/30 font-bold text-base shadow-lg shadow-brand-600/20 transition-all cursor-pointer"
             >
-                <i data-lucide="send" class="w-4 h-4 mr-2"></i>
-                <span>Javobni yuborish</span>
+                <i data-lucide="send" id="submitBtnIcon" class="w-5 h-5 mr-2"></i>
+                <span id="submitBtnText">Javobni o‘qituvchiga yuborish</span>
             </button>
         </form>
     </div>
 
-    <!-- Uploaded Attachments List -->
+    <!-- Uploaded Attachments List (Already sent) -->
     {% if attachments %}
     <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm space-y-4">
-        <h3 class="text-base font-bold text-gray-900 dark:text-white flex items-center">
-            <i data-lucide="paperclip" class="w-4 h-4 mr-2 text-brand-600"></i>
-            Yuborilgan fayllaringiz ({{ attachments.count }} ta)
+        <h3 class="text-base font-bold text-gray-900 dark:text-white flex items-center justify-between">
+            <span class="flex items-center">
+                <i data-lucide="paperclip" class="w-4 h-4 mr-2 text-brand-600"></i>
+                Yuborilgan vazifa suratlari va fayllar ({{ attachments.count }} ta)
+            </span>
+            <span class="text-xs font-normal text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
+                O‘qituvchiga yetib borgan
+            </span>
         </h3>
 
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {% for att in attachments %}
-            <div class="p-3 bg-gray-50 dark:bg-gray-700/40 rounded-2xl border border-gray-200/60 dark:border-gray-700 flex flex-col justify-between">
+            <div class="p-3 bg-gray-50 dark:bg-gray-700/40 rounded-2xl border border-gray-200/60 dark:border-gray-700 flex flex-col justify-between hover:border-brand-300 transition-colors">
                 <div>
-                    {% if att.file_type == 'image' %}
-                    <div class="w-full h-24 bg-gray-200 dark:bg-gray-600 rounded-xl overflow-hidden mb-2">
-                        <img src="{% url 'secure_submission_media' att.id %}" alt="Preview" class="w-full h-full object-cover">
+                    {% if att.is_image or att.file_type == 'image' %}
+                    <div class="w-full h-32 bg-gray-200 dark:bg-gray-600 rounded-xl overflow-hidden mb-2 relative group flex items-center justify-center">
+                        <img src="{% url 'secure_submission_media' att.id %}" alt="{{ att.file_name }}" class="w-full h-full object-cover">
                     </div>
                     {% else %}
-                    <div class="w-full h-24 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center mb-2 text-gray-400">
-                        <i data-lucide="file-text" class="w-8 h-8"></i>
+                    <div class="w-full h-32 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center mb-2 text-gray-400">
+                        <i data-lucide="file-text" class="w-10 h-10 text-brand-600"></i>
                     </div>
                     {% endif %}
                     <p class="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate" title="{{ att.file_name }}">
@@ -222,8 +287,8 @@
                     <p class="text-[10px] text-gray-400">{{ att.size_display }}</p>
                 </div>
 
-                <a href="{% url 'secure_submission_media' att.id %}" target="_blank" class="mt-2 text-[11px] font-bold text-brand-600 hover:underline flex items-center">
-                    <i data-lucide="eye" class="w-3.5 h-3.5 mr-1"></i> Ko‘rish
+                <a href="{% url 'secure_submission_media' att.id %}" target="_blank" class="mt-2 text-xs font-bold text-brand-600 hover:underline flex items-center justify-center py-1.5 rounded-lg bg-brand-50 dark:bg-brand-950/40">
+                    <i data-lucide="maximize-2" class="w-3.5 h-3.5 mr-1"></i> Rasmni ko‘rish
                 </a>
             </div>
             {% endfor %}
@@ -258,18 +323,223 @@
 
 {% block extra_js %}
 <script>
-    function handleFileSelect(input) {
-        const previewList = document.getElementById('filePreviewList');
-        const fileNames = document.getElementById('fileNames');
-        fileNames.innerHTML = '';
-        if (input.files && input.files.length > 0) {
-            previewList.classList.remove('hidden');
-            for (let i = 0; i < input.files.length; i++) {
-                const li = document.createElement('li');
-                li.textContent = `📎 ${input.files[i].name} (${(input.files[i].size / 1024).toFixed(1)} KB)`;
-                fileNames.appendChild(li);
-            }
+    // Global accumulated list of files to send
+    let accumulatedFiles = [];
+
+    function syncRealFileInput() {
+        const input = document.getElementById('realFilesInput');
+        try {
+            const dt = new DataTransfer();
+            accumulatedFiles.forEach(file => dt.items.add(file));
+            input.files = dt.files;
+        } catch (e) {
+            console.warn('DataTransfer not fully supported on this browser:', e);
+        }
+
+        const countBadge = document.getElementById('selectedCountBadge');
+        if (accumulatedFiles.length > 0) {
+            countBadge.textContent = `${accumulatedFiles.length} ta fayl tanlandi`;
+            countBadge.classList.remove('hidden');
+        } else {
+            countBadge.classList.add('hidden');
         }
     }
+
+    function onFilesAdded(fileList, sourceName) {
+        hideErrorNotice();
+        if (!fileList || fileList.length === 0) return;
+
+        for (let i = 0; i < fileList.length; i++) {
+            const file = fileList[i];
+            // Check size (50MB)
+            if (file.size > 52428800) {
+                showErrorNotice(`"${file.name}" faylining hajmi 50MB dan katta bo'lishi mumkin emas!`);
+                continue;
+            }
+
+            // Check duplicate by name + size
+            const isDuplicate = accumulatedFiles.some(f => f.name === file.name && f.size === file.size);
+            if (!isDuplicate) {
+                accumulatedFiles.push(file);
+            }
+        }
+
+        // Reset the trigger input so user can take photo again immediately
+        document.getElementById('cameraInput').value = '';
+        document.getElementById('galleryInput').value = '';
+
+        syncRealFileInput();
+        renderPreviews();
+    }
+
+    function removeFileAt(index) {
+        accumulatedFiles.splice(index, 1);
+        syncRealFileInput();
+        renderPreviews();
+    }
+
+    function clearAllSelectedFiles() {
+        accumulatedFiles = [];
+        syncRealFileInput();
+        renderPreviews();
+    }
+
+    function renderPreviews() {
+        const previewList = document.getElementById('filePreviewList');
+        const container = document.getElementById('fileThumbnails');
+        const countText = document.getElementById('previewCountText');
+
+        container.innerHTML = '';
+        countText.textContent = accumulatedFiles.length;
+
+        if (accumulatedFiles.length === 0) {
+            previewList.classList.add('hidden');
+            return;
+        }
+
+        previewList.classList.remove('hidden');
+
+        accumulatedFiles.forEach((file, index) => {
+            const card = document.createElement('div');
+            card.className = 'relative p-2.5 bg-white dark:bg-gray-800 rounded-2xl border border-brand-200 dark:border-brand-700/70 shadow-sm flex flex-col justify-between group';
+
+            // Top preview thumbnail
+            const isImg = file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|heic|heif|jfif|bmp)$/i.test(file.name);
+            let mediaContainer;
+
+            if (isImg) {
+                mediaContainer = document.createElement('div');
+                mediaContainer.className = 'w-full h-24 rounded-xl overflow-hidden mb-2 bg-gray-100 dark:bg-gray-700 relative';
+                const img = document.createElement('img');
+                img.className = 'w-full h-full object-cover';
+                img.src = URL.createObjectURL(file);
+                mediaContainer.appendChild(img);
+            } else {
+                mediaContainer = document.createElement('div');
+                mediaContainer.className = 'w-full h-24 rounded-xl flex items-center justify-center bg-gray-100 dark:bg-gray-700/60 mb-2 text-brand-600 font-black text-xs uppercase';
+                mediaContainer.textContent = file.name.split('.').pop() || 'FILE';
+            }
+
+            // Remove button (X)
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'absolute top-1 right-1 w-6 h-6 rounded-full bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center shadow-md transition-transform hover:scale-110 z-10';
+            removeBtn.innerHTML = '&times;';
+            removeBtn.title = "Ushbu rasmni o'chirish";
+            removeBtn.onclick = (e) => {
+                e.stopPropagation();
+                removeFileAt(index);
+            };
+            card.appendChild(removeBtn);
+            card.appendChild(mediaContainer);
+
+            // Title & size info
+            const infoDiv = document.createElement('div');
+            const pageBadge = document.createElement('span');
+            pageBadge.className = 'inline-block text-[10px] font-bold text-brand-700 dark:text-brand-300 bg-brand-50 dark:bg-brand-950/60 px-1.5 py-0.5 rounded mb-1';
+            pageBadge.textContent = isImg ? `${index + 1}-sahifa` : 'Hujjat';
+            infoDiv.appendChild(pageBadge);
+
+            const nameEl = document.createElement('span');
+            nameEl.className = 'text-[11px] font-semibold text-gray-800 dark:text-gray-200 truncate w-full block';
+            nameEl.title = file.name;
+            nameEl.textContent = file.name;
+            infoDiv.appendChild(nameEl);
+
+            const sizeEl = document.createElement('span');
+            sizeEl.className = 'text-[9px] text-gray-400 block';
+            sizeEl.textContent = `${(file.size / 1024).toFixed(1)} KB`;
+            infoDiv.appendChild(sizeEl);
+
+            card.appendChild(infoDiv);
+            container.appendChild(card);
+        });
+
+        if (window.lucide) {
+            lucide.createIcons();
+        }
+    }
+
+    function showErrorNotice(msg) {
+        const notice = document.getElementById('uploadErrorNotice');
+        const text = document.getElementById('uploadErrorNoticeText');
+        text.textContent = msg;
+        notice.classList.remove('hidden');
+    }
+
+    function hideErrorNotice() {
+        document.getElementById('uploadErrorNotice').classList.add('hidden');
+    }
+
+    // Drag and Drop handling
+    function handleDragOver(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        document.getElementById('dropZone').classList.add('border-brand-500', 'bg-brand-50/50');
+    }
+
+    function handleDragLeave(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        document.getElementById('dropZone').classList.remove('border-brand-500', 'bg-brand-50/50');
+    }
+
+    function handleDrop(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        document.getElementById('dropZone').classList.remove('border-brand-500', 'bg-brand-50/50');
+        if (e.dataTransfer && e.dataTransfer.files) {
+            onFilesAdded(e.dataTransfer.files, 'dragdrop');
+        }
+    }
+
+    // Handle Quick "Vazifani bajardim" submit: warn if photos were picked but not sent
+    function handleQuickDoneSubmit(e) {
+        if (accumulatedFiles.length > 0) {
+            const confirmed = confirm(
+                "Diqqat! Siz daftarning suratini tanlagansiz.\n" +
+                "Surat o'qituvchiga yetib borishi uchun pastdagi 'Javobni o‘qituvchiga yuborish' tugmasini bosing!\n\n" +
+                "Baribir suratsiz bajarildi deb belgilamoqchimisiz?"
+            );
+            if (!confirmed) {
+                e.preventDefault();
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // Handle main answer submit
+    function handleSubmissionSubmit(e) {
+        hideErrorNotice();
+        syncRealFileInput();
+
+        const textInput = document.getElementById('submissionTextInput');
+        const textVal = (textInput ? textInput.value : '').trim();
+        const hasExistingAttachments = {{ attachments.count|default:0 }} > 0;
+
+        if (accumulatedFiles.length === 0 && textVal === '' && !hasExistingAttachments) {
+            e.preventDefault();
+            showErrorNotice("Iltimos, avval daftardagi vazifani rasmga oling yoki javob matnini yozing!");
+            window.scrollTo({ top: document.getElementById('submissionForm').offsetTop - 60, behavior: 'smooth' });
+            return false;
+        }
+
+        // Show uploading state
+        const btn = document.getElementById('submitWorkButton');
+        const btnText = document.getElementById('submitBtnText');
+        const btnIcon = document.getElementById('submitBtnIcon');
+
+        btn.disabled = true;
+        btn.classList.add('opacity-75', 'cursor-not-allowed');
+        btnIcon.setAttribute('data-lucide', 'loader-2');
+        btnIcon.classList.add('animate-spin');
+        btnText.textContent = "Rasmlar yuklanmoqda, iltimos kuting...";
+
+        if (window.lucide) {
+            lucide.createIcons();
+        }
+
+        return true;
 </script>
 {% endblock %}

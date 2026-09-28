@@ -238,7 +238,29 @@ class SubmissionAttachment(models.Model):
                 self.file_size = self.file.size
             except Exception:
                 pass
+        # Auto-detect file type if not set or set to default/other
+        name = (self.file_name or (self.file.name if self.file else '') or '').lower()
+        if any(name.endswith(ext) for ext in ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.heic', '.heif', '.jfif', '.svg']):
+            self.file_type = 'image'
+        elif any(name.endswith(ext) for ext in ['.mp4', '.mov', '.avi', '.mkv', '.webm', '.3gp']):
+            self.file_type = 'video'
+        elif any(name.endswith(ext) for ext in ['.pdf', '.doc', '.docx', '.txt', '.ppt', '.pptx', '.xls', '.xlsx']):
+            self.file_type = 'document'
         super().save(*args, **kwargs)
+
+    @property
+    def is_image(self):
+        if self.file_type == 'image':
+            return True
+        name = (self.file_name or (self.file.name if self.file else '') or '').lower()
+        return any(name.endswith(ext) for ext in ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.heic', '.heif', '.jfif', '.svg'])
+
+    @property
+    def is_video(self):
+        if self.file_type == 'video':
+            return True
+        name = (self.file_name or (self.file.name if self.file else '') or '').lower()
+        return any(name.endswith(ext) for ext in ['.mp4', '.mov', '.avi', '.mkv', '.webm', '.3gp'])
 
     @property
     def size_display(self):

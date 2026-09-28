@@ -105,12 +105,14 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             {% if item.submission and item.submission.attachments.count > 0 %}
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-purple-50 text-purple-700">
-                                    <i data-lucide="paperclip" class="w-3 h-3 mr-1"></i>
-                                    {{ item.submission.attachments.count }} ta fayl
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                                    <i data-lucide="image" class="w-3.5 h-3.5 mr-1 text-purple-600"></i>
+                                    {{ item.submission.attachments.count }} ta rasm/fayl
                                 </span>
                             {% elif item.completed_without_files %}
-                                <span class="text-xs text-gray-400 italic">Faylsiz belgilangan</span>
+                                <span class="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-md border border-amber-200 dark:border-amber-800 italic">
+                                    Faylsiz belgilangan
+                                </span>
                             {% else %}
                                 <span class="text-xs text-gray-400">—</span>
                             {% endif %}

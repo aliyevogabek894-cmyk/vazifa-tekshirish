@@ -75,9 +75,11 @@ def student_required(view_func):
 def verify_student_owns_assignment(user, student_assignment):
     """
     Validates that student only accesses their own assignment.
-    Staff/Admin can access any.
+    Staff/Admin/Teacher can access any.
     """
-    if user.is_staff or user.is_superuser:
+    if not user.is_authenticated:
+        return False
+    if user.is_staff or user.is_superuser or hasattr(user, 'admin_profile'):
         return True
     if hasattr(user, 'student_profile') and student_assignment.student_id == user.student_profile.id:
         return True
@@ -86,9 +88,11 @@ def verify_student_owns_assignment(user, student_assignment):
 
 def verify_student_owns_attachment(user, attachment):
     """
-    Validates that only the student owner or admin can download/view the file.
+    Validates that only the student owner or admin/teacher can download/view the file.
     """
-    if user.is_staff or user.is_superuser:
+    if not user.is_authenticated:
+        return False
+    if user.is_staff or user.is_superuser or hasattr(user, 'admin_profile'):
         return True
     if hasattr(user, 'student_profile'):
         sub = attachment.submission

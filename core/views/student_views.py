@@ -120,54 +120,89 @@ def student_assignment_detail(request, task_id):
         # Action 2: Submit answer with text and/or files
         elif action_type == 'submit_work':
             submission_text = request.POST.get('submission_text', '').strip()
-            files = request.FILES.getlist('files')
+            # Collect files from all possible inputs (standard files, camera_files, upload_files)
+            raw_files = (
+                request.FILES.getlist('files') +
+                request.FILES.getlist('camera_files') +
+                request.FILES.getlist('upload_files')
+            )
+            files = [f for f in raw_files if f and getattr(f, 'size', 0) > 0]
+
+            # Agar foydalanuvchi hech narsa kiritmagan va avval ham fayl yuklanmagan bo'lsa
+            existing_count = attachments.count()
+            if not files and not submission_text and existing_count == 0:
+                messages.error(request, "Iltimos, avval daftardagi vazifa rasmini yuklang yoki javob matnini yozing!")
+                return redirect('student_assignment_detail', task_id=task.id)
 
             submission.submission_text = submission_text
             submission.submitted_at = timezone.now()
             submission.review_status = 'pending'
             submission.save()
 
-            # Process uploaded files
+            # Process uploaded files with wide mobile format support
             allowed_extensions = {
-                'image': ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'],
+                'image': ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.heic', '.heif', '.jfif', '.svg'],
                 'video': ['.mp4', '.mov', '.avi', '.mkv', '.webm', '.3gp'],
                 'document': ['.pdf', '.doc', '.docx', '.txt', '.ppt', '.pptx', '.xls', '.xlsx']
             }
 
-            for uploaded_file in files:
+            saved_attachments_count = 0
+            for idx, uploaded_file in enumerate(files, start=1):
                 # Basic size check (50MB max per file)
                 if uploaded_file.size > 52428800:
                     messages.error(request, f"{uploaded_file.name} fayli hajmi 50MB dan katta bo'lishi mumkin emas!")
                     continue
 
-                ext = os.path.splitext(uploaded_file.name)[1].lower()
+                original_name = uploaded_file.name or f"file_{idx}.jpg"
+                ext = os.path.splitext(original_name)[1].lower()
+                content_type = getattr(uploaded_file, 'content_type', '') or ''
                 f_type = 'other'
-                for cat, exts in allowed_extensions.items():
-                    if ext in exts:
-                        f_type = cat
-                        break
+
+                if content_type.startswith('image/') or ext in allowed_extensions['image'] or not ext:
+                    f_type = 'image'
+                    if not ext:
+                        ext = '.jpg'
+                elif content_type.startswith('video/') or ext in allowed_extensions['video']:
+                    f_type = 'video'
+                else:
+                    for cat, exts in allowed_extensions.items():
+                        if ext in exts:
+                            f_type = cat
+                            break
+
+                # Agar mobil kamera har safar 'image.jpg' deb nomlagan bo'lsa, chiroyli nom beramiz
+                display_name = original_name
+                if original_name.lower() in ['image.jpg', 'image.jpeg', 'camera.jpg', 'captured_image.jpg'] and len(files) > 1:
+                    display_name = f"daftar_sahifa_{idx}{ext}"
 
                 SubmissionAttachment.objects.create(
                     submission=submission,
                     file=uploaded_file,
-                    file_name=uploaded_file.name,
+                    file_name=display_name,
                     file_type=f_type,
                     file_size=uploaded_file.size
                 )
+                saved_attachments_count += 1
 
             task.status = 'submitted'
             task.marked_done_at = timezone.now()
-            task.completed_without_files = (len(files) == 0 and not attachments.exists())
+            total_attachments_now = submission.attachments.count()
+            task.completed_without_files = (total_attachments_now == 0)
             task.save()
 
+            file_msg = f"{saved_attachments_count} ta yangi rasm/fayl" if saved_attachments_count > 0 else "matnli javob"
             SubmissionHistory.objects.create(
                 student_assignment=task,
-                action=f"O'quvchi topshiriq javobini yubordi ({len(files)} ta yangi fayl)",
+                action=f"O'quvchi topshiriq javobini yubordi ({file_msg})",
                 changed_by=request.user,
                 old_status=task.status,
                 new_status='submitted'
             )
-            messages.success(request, "Vazifa javobi muvaffaqiyatli yuborildi! O'qituvchi tez orada tekshiradi.")
+
+            if saved_attachments_count > 0:
+                messages.success(request, f"Vazifa javobi muvaffaqiyatli yuborildi! {saved_attachments_count} ta rasm o'qituvchiga tekshirish uchun topshirildi.")
+            else:
+                messages.success(request, "Vazifa javobi muvaffaqiyatli yuborildi! O'qituvchi tez orada tekshiradi.")
             return redirect('student_assignment_detail', task_id=task.id)
 
     # Class aggregate progress for this task
