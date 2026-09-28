@@ -22,6 +22,7 @@ urlpatterns = [
     path('admin-panel/classrooms/', admin_views.classrooms_view, name='admin_classrooms'),
     path('admin-panel/students/', admin_views.students_view, name='admin_students'),
     path('admin-panel/students/import/', admin_views.student_excel_import_view, name='admin_students_import'),
+    path('admin-panel/students/import-excel/', admin_views.student_excel_import_view, name='admin_student_import_excel'),
     path('admin-panel/assignments/', admin_views.assignments_view, name='admin_assignments'),
     path('admin-panel/submissions/', admin_views.submissions_view, name='admin_submissions'),
     path('admin-panel/review/<int:task_id>/', admin_views.review_submission_view, name='admin_review_submission'),
