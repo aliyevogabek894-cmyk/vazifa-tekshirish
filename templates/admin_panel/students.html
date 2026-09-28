@@ -10,8 +10,21 @@
     <!-- Top header & buttons -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-            <h1 class="text-2xl font-black text-gray-900 dark:text-white">O‘quvchilar ro‘yxati</h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Barcha o‘quvchilar ma’lumotlari, sinflari va telefon raqamlari</p>
+            <h1 class="text-2xl font-black text-gray-900 dark:text-white flex items-center gap-2">
+                <i data-lucide="users" class="w-7 h-7 text-brand-600"></i>
+                {% if selected_classroom %}
+                    {{ selected_classroom.name }} sinfi o‘quvchilari va monitoringi
+                {% else %}
+                    O‘quvchilar ro‘yxati
+                {% endif %}
+            </h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                {% if selected_classroom %}
+                    Ushbu sinf o‘quvchilari, ularning telefon raqamlari va topshiriqlari nazorati
+                {% else %}
+                    Barcha o‘quvchilar ma’lumotlari, sinflari, telefon raqamlari va faolligi
+                {% endif %}
+            </p>
         </div>
         <div class="flex flex-wrap items-center gap-2">
             <button onclick="document.getElementById('importExcelModal').classList.remove('hidden')" class="inline-flex items-center px-4 py-2.5 rounded-xl text-sm font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 border border-emerald-200 dark:border-emerald-800 transition-all">
@@ -24,6 +37,66 @@
             </button>
         </div>
     </div>
+
+    <!-- Bitta sinf tanlanganda: Qildi / Qilmadi / Kech qoldi Statistikasi -->
+    {% if class_metrics %}
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-3xl p-6 text-white shadow-lg space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-white/20 pb-3">
+            <div class="flex items-center gap-2">
+                <span class="p-2 rounded-xl bg-white/20 backdrop-blur-md">
+                    <i data-lucide="school" class="w-5 h-5"></i>
+                </span>
+                <div>
+                    <h2 class="text-lg font-black">{{ class_metrics.classroom.name }} sinfi hisoboti</h2>
+                    <p class="text-xs text-blue-100">O‘quvchilarning vazifalarni bajarish ko‘rsatkichlari</p>
+                </div>
+            </div>
+            <a href="{% url 'admin_students' %}" class="inline-flex items-center px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold transition-all text-white">
+                <i data-lucide="arrow-left" class="w-3.5 h-3.5 mr-1"></i>
+                Barcha sinflarga qaytish
+            </a>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <!-- Jami o'quvchilar -->
+            <div class="bg-white/10 rounded-2xl p-4 backdrop-blur-md border border-white/10">
+                <span class="text-xs font-medium text-blue-100 block">Jami o‘quvchilar:</span>
+                <p class="text-2xl sm:text-3xl font-black mt-1">{{ class_metrics.total_students }} nafar</p>
+                <span class="text-[11px] text-blue-200">Sinf a’zolari</span>
+            </div>
+
+            <!-- Qildi (Bajarilgan) -->
+            <div class="bg-emerald-500/20 rounded-2xl p-4 backdrop-blur-md border border-emerald-400/40">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-medium text-emerald-100">Qildi:</span>
+                    <i data-lucide="check-circle" class="w-4 h-4 text-emerald-300"></i>
+                </div>
+                <p class="text-2xl sm:text-3xl font-black text-emerald-200 mt-1">{{ class_metrics.completed_count }} ta</p>
+                <span class="text-[11px] text-emerald-200 font-semibold">Bajarilgan / Qabul qilingan</span>
+            </div>
+
+            <!-- Qilmadi (Bajarilmagan) -->
+            <div class="bg-amber-500/20 rounded-2xl p-4 backdrop-blur-md border border-amber-400/40">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-medium text-amber-100">Qilmadi:</span>
+                    <i data-lucide="clock" class="w-4 h-4 text-amber-300"></i>
+                </div>
+                <p class="text-2xl sm:text-3xl font-black text-amber-200 mt-1">{{ class_metrics.not_done_count }} ta</p>
+                <span class="text-[11px] text-amber-200 font-semibold">Hali boshlanmagan</span>
+            </div>
+
+            <!-- Kech qoldi (Muddati o'tgan) -->
+            <div class="bg-rose-500/20 rounded-2xl p-4 backdrop-blur-md border border-rose-400/40">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-medium text-rose-100">Kech qoldi:</span>
+                    <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-300"></i>
+                </div>
+                <p class="text-2xl sm:text-3xl font-black text-rose-200 mt-1">{{ class_metrics.overdue_count }} ta</p>
+                <span class="text-[11px] text-rose-200 font-semibold">Muddati o‘tib ketgan</span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Filters & Search Bar -->
     <div class="bg-white dark:bg-gray-800 p-4 rounded-3xl border border-gray-200 dark:border-gray-700 shadow-xs">
@@ -42,10 +115,10 @@
             </div>
 
             <div class="sm:w-64">
-                <select name="classroom_id" onchange="this.form.submit()" class="w-full px-4 py-2.5 rounded-2xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                <select name="classroom_id" onchange="this.form.submit()" class="w-full px-4 py-2.5 rounded-2xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none font-bold">
                     <option value="">— Barcha sinflar —</option>
                     {% for c in classrooms %}
-                        <option value="{{ c.id }}" {% if selected_class == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
+                        <option value="{{ c.id }}" {% if selected_class == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }} sinfi</option>
                     {% endfor %}
                 </select>
             </div>
@@ -68,9 +141,10 @@
                 <thead class="bg-gray-50 dark:bg-gray-700/50 text-xs uppercase font-bold text-gray-700 dark:text-gray-200">
                     <tr>
                         <th class="px-6 py-4">№</th>
-                        <th class="px-6 py-4">F.I.O</th>
+                        <th class="px-6 py-4">O‘quvchi F.I.O</th>
+                        <th class="px-6 py-4">Telefon raqami (Login)</th>
                         <th class="px-6 py-4">Sinf</th>
-                        <th class="px-6 py-4">Telefon raqami</th>
+                        <th class="px-6 py-4">Vazifalar (Qildi / Qilmadi / Kech)</th>
                         <th class="px-6 py-4">Parol</th>
                         <th class="px-6 py-4">Holati</th>
                         <th class="px-6 py-4 text-right">Amallar</th>
@@ -80,23 +154,53 @@
                     {% for st in students %}
                     <tr class="hover:bg-gray-50/80 dark:hover:bg-gray-700/30 transition-colors">
                         <td class="px-6 py-4 text-xs font-mono text-gray-400">{{ forloop.counter }}</td>
-                        <td class="px-6 py-4 font-bold text-gray-900 dark:text-white whitespace-nowrap flex items-center space-x-3">
-                            <span class="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-950 text-brand-700 dark:text-brand-300 font-bold flex items-center justify-center text-xs">
-                                {{ st.first_name|slice:":1" }}
-                            </span>
-                            <span>{{ st.full_name }}</span>
-                        </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-50 dark:bg-blue-950/60 text-brand-700 dark:text-brand-300">
+                            <div class="flex items-center space-x-3">
+                                <span class="w-9 h-9 rounded-full bg-brand-100 dark:bg-brand-950 text-brand-700 dark:text-brand-300 font-black flex items-center justify-center text-xs">
+                                    {{ st.first_name|slice:":1" }}
+                                </span>
+                                <div>
+                                    <div class="font-bold text-gray-900 dark:text-white">{{ st.full_name }}</div>
+                                    <div class="text-[11px] text-gray-400">Ro‘yxatdan o‘tdi: {{ st.created_at|date:"d.m.Y" }}</div>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Telefon raqami (Katta va aniq ko'rinadi) -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-3 py-1.5 rounded-xl font-mono text-xs font-bold bg-blue-50 dark:bg-blue-950/60 text-brand-700 dark:text-brand-300 border border-blue-200 dark:border-blue-900/50">
+                                <i data-lucide="phone" class="w-3.5 h-3.5 mr-1.5 text-brand-600"></i>
+                                {{ st.phone_number }}
+                            </span>
+                        </td>
+
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
                                 {{ st.classroom.name|default:"—" }}
                             </span>
                         </td>
-                        <td class="px-6 py-4 text-xs font-mono whitespace-nowrap">
-                            {{ st.phone_number }}
+
+                        <!-- O'quvchining shaxsiy vazifalar ko'rsatkichlari -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center gap-1.5 text-xs">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-md font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300" title="Bajarilgan vazifalar">
+                                    ✓ {{ st.done_count }} ta qildi
+                                </span>
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-md font-bold bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300" title="Bajarilmagan vazifalar">
+                                    • {{ st.not_done_count }} ta qilmadi
+                                </span>
+                                {% if st.overdue_count > 0 %}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-md font-bold bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300" title="Muddati o‘tib kechikkan vazifalar">
+                                    ! {{ st.overdue_count }} kech qoldi
+                                </span>
+                                {% endif %}
+                            </div>
                         </td>
+
                         <td class="px-6 py-4 text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap bg-emerald-50/40 dark:bg-emerald-950/20">
                             {{ st.raw_password|default:"123456" }}
                         </td>
+
                         <td class="px-6 py-4 whitespace-nowrap">
                             {% if st.is_active %}
                                 <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
@@ -108,6 +212,7 @@
                                 </span>
                             {% endif %}
                         </td>
+
                         <td class="px-6 py-4 text-right whitespace-nowrap space-x-1.5">
                             <!-- Reset Password -->
                             <form method="POST" action="" class="inline-block" onsubmit="return confirm('{{ st.full_name }} uchun yangi parol generatsiya qilinsinmi?');">
@@ -133,7 +238,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="7" class="px-6 py-12 text-center text-gray-400 text-sm">
+                        <td colspan="8" class="px-6 py-12 text-center text-gray-400 text-sm">
                             O‘quvchilar topilmadi.
                         </td>
                     </tr>
@@ -143,94 +248,98 @@
         </div>
     </div>
 
-    <!-- Modal: Add Student -->
-    <div id="addStudentModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-gray-200 dark:border-gray-700">
-            <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-700 mb-4">
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Yangi o‘quvchi qo‘shish</h3>
-                <button type="button" onclick="document.getElementById('addStudentModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
+</div>
 
-            <form method="POST" action="" class="space-y-4">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="create">
-
-                <div>
-                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Ismi *</label>
-                    {{ form.first_name }}
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Familiyasi *</label>
-                    {{ form.last_name }}
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Sinfi *</label>
-                    {{ form.classroom }}
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Telefon raqami *</label>
-                    {{ form.phone_number }}
-                    <span class="text-[10px] text-gray-400">Masalan: +998901234567</span>
-                </div>
-
-                <div class="flex items-center space-x-2 pt-2">
-                    {{ form.is_active }}
-                    <label class="text-xs font-medium text-gray-700 dark:text-gray-300">Faol holatda</label>
-                </div>
-
-                <div class="pt-4 flex justify-end space-x-2">
-                    <button type="button" onclick="document.getElementById('addStudentModal').classList.add('hidden')" class="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100">
-                        Bekor qilish
-                    </button>
-                    <button type="submit" class="px-5 py-2 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 shadow-md">
-                        Qo‘shish
-                    </button>
-                </div>
-            </form>
+<!-- Modal: Excel Import -->
+<div id="importExcelModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-gray-200 dark:border-gray-700">
+        <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-700 mb-4">
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <i data-lucide="file-spreadsheet" class="w-5 h-5 text-emerald-600"></i>
+                Excel orqali o‘quvchilarni yuklash
+            </h3>
+            <button type="button" onclick="document.getElementById('importExcelModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
         </div>
-    </div>
 
-    <!-- Modal: Excel Import -->
-    <div id="importExcelModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-gray-200 dark:border-gray-700">
-            <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-700 mb-4">
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center">
-                    <i data-lucide="file-spreadsheet" class="w-5 h-5 mr-2 text-emerald-600"></i>
-                    Excel orqali ommaviy import
-                </h3>
-                <button type="button" onclick="document.getElementById('importExcelModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
+        <form method="POST" action="{% url 'admin_student_import_excel' %}" enctype="multipart/form-data" class="space-y-4">
+            {% csrf_token %}
+            <div>
+                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">.xlsx yoki .xls faylini tanlang:</label>
+                <input type="file" name="excel_file" accept=".xlsx, .xls" required class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
             </div>
 
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">
-                Excel faylingiz 1-qatorida quyidagi ustunlar bo‘lishi lozim: <strong>Ism</strong>, <strong>Familiya</strong>, <strong>Sinf</strong>, <strong>Telefon</strong>.
+            <p class="text-[11px] text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/40 p-3 rounded-xl border border-gray-200/60 dark:border-gray-700">
+                <strong>Format:</strong> Jadval ustunlari quyidagicha bo‘lishi lozim:<br>
+                <code>F.I.O | Sinf | Telefon raqami</code><br>
+                (Masalan: <i>Aliyev Sardor | 1-A | +998901234567</i>)
             </p>
 
-            <form method="POST" enctype="multipart/form-data" action="{% url 'admin_students_import' %}" class="space-y-4">
-                {% csrf_token %}
-                <div class="p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-2xl text-center bg-gray-50 dark:bg-gray-700/30">
-                    <i data-lucide="upload-cloud" class="w-8 h-8 mx-auto text-emerald-600 mb-2"></i>
-                    <span class="text-xs font-bold text-gray-700 dark:text-gray-300 block mb-1">Excel faylini (.xlsx) tanlang</span>
-                    <input type="file" name="excel_file" accept=".xlsx,.xls,.csv" required class="text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-emerald-50 file:text-emerald-700">
-                </div>
-
-                <div class="pt-2 flex justify-end space-x-2">
-                    <button type="button" onclick="document.getElementById('importExcelModal').classList.add('hidden')" class="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100">
-                        Bekor qilish
-                    </button>
-                    <button type="submit" class="px-5 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-md">
-                        Importni boshlash
-                    </button>
-                </div>
-            </form>
-        </div>
+            <div class="pt-3 flex justify-end gap-2 border-t border-gray-100 dark:border-gray-700">
+                <button type="button" onclick="document.getElementById('importExcelModal').classList.add('hidden')" class="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100">
+                    Bekor qilish
+                </button>
+                <button type="submit" class="px-5 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-md">
+                    Import qilish
+                </button>
+            </div>
+        </form>
     </div>
+</div>
 
+<!-- Modal: Add Student -->
+<div id="addStudentModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-gray-200 dark:border-gray-700">
+        <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-700 mb-4">
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <i data-lucide="user-plus" class="w-5 h-5 text-brand-600"></i>
+                Yangi o‘quvchi qo‘shish
+            </h3>
+            <button type="button" onclick="document.getElementById('addStudentModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <form method="POST" action="{% url 'admin_students' %}" class="space-y-4">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create">
+
+            <div>
+                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Ismi *</label>
+                {{ form.first_name }}
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Familiyasi *</label>
+                {{ form.last_name }}
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Sinfi *</label>
+                {{ form.classroom }}
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Telefon raqami (Login) *</label>
+                {{ form.phone_number }}
+                <p class="text-[10px] text-gray-400 mt-1">O‘quvchi ushbu telefon raqami orqali tizimga kiradi.</p>
+            </div>
+
+            <div class="flex items-center space-x-2 pt-2">
+                {{ form.is_active }}
+                <label class="text-xs font-medium text-gray-700 dark:text-gray-300">Faol holatda saqlash</label>
+            </div>
+
+            <div class="pt-4 flex justify-end gap-2 border-t border-gray-100 dark:border-gray-700">
+                <button type="button" onclick="document.getElementById('addStudentModal').classList.add('hidden')" class="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100">
+                    Bekor qilish
+                </button>
+                <button type="submit" class="px-5 py-2 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 shadow-md">
+                    Saqlash va Parol berish
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 {% endblock %}

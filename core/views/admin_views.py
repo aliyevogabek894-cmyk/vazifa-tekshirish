@@ -156,9 +156,26 @@ def teachers_view(request):
 
 @admin_required
 def classrooms_view(request):
-    classrooms = Classroom.objects.annotate(
-        students_total=Count('students', filter=Q(students__is_active=True))
+    now = timezone.now()
+    classrooms_qs = Classroom.objects.filter(is_active=True).annotate(
+        students_total=Count('students', filter=Q(students__is_active=True), distinct=True)
     ).order_by('grade_level', 'name')
+
+    # Har bir sinf uchun o'quvchilar vazifa statistikasi (qildi, qilmadi, kech qoldi)
+    class_stats = []
+    for c in classrooms_qs:
+        tasks = StudentAssignment.objects.filter(student__classroom=c, student__is_active=True)
+        completed_c = tasks.filter(status__in=['completed', 'approved', 'submitted', 'under_review']).count()
+        overdue_c = tasks.filter(Q(status='overdue') | Q(status='not_started', assignment__due_date__lt=now)).count()
+        not_done_c = tasks.filter(status='not_started', assignment__due_date__gte=now).count()
+
+        class_stats.append({
+            'classroom': c,
+            'students_total': c.students_total,
+            'completed_count': completed_c,
+            'not_done_count': not_done_c,
+            'overdue_count': overdue_c,
+        })
 
     if request.method == 'POST':
         action = request.POST.get('action')
@@ -181,18 +198,42 @@ def classrooms_view(request):
             return redirect('admin_classrooms')
 
     form = ClassroomForm()
-    return render(request, 'admin_panel/classrooms.html', {'classrooms': classrooms, 'form': form})
+    return render(request, 'admin_panel/classrooms.html', {
+        'class_stats': class_stats,
+        'form': form
+    })
 
 
 @admin_required
 def students_view(request):
     query = request.GET.get('q', '').strip()
     class_id = request.GET.get('classroom_id')
+    now = timezone.now()
 
     students_qs = StudentProfile.objects.select_related('classroom', 'user')
+    selected_classroom = None
+    class_metrics = None
 
     if class_id:
-        students_qs = students_qs.filter(classroom_id=class_id)
+        selected_classroom = Classroom.objects.filter(id=class_id).first()
+        if selected_classroom:
+            students_qs = students_qs.filter(classroom_id=class_id)
+
+            # Sinfga oid vazifalar statistikasi: Necha kishi qildi, necha kishi qilmadi, necha kishi kech qoldi
+            tasks = StudentAssignment.objects.filter(student__classroom=selected_classroom, student__is_active=True)
+            completed_c = tasks.filter(status__in=['completed', 'approved', 'submitted', 'under_review']).count()
+            overdue_c = tasks.filter(Q(status='overdue') | Q(status='not_started', assignment__due_date__lt=now)).count()
+            not_done_c = tasks.filter(status='not_started', assignment__due_date__gte=now).count()
+
+            class_metrics = {
+                'classroom': selected_classroom,
+                'total_students': students_qs.count(),
+                'total_tasks': tasks.count(),
+                'completed_count': completed_c,
+                'not_done_count': not_done_c,
+                'overdue_count': overdue_c,
+            }
+
     if query:
         students_qs = students_qs.filter(
             Q(first_name__icontains=query) |
@@ -200,8 +241,17 @@ def students_view(request):
             Q(phone_number__icontains=query)
         )
 
-    students = students_qs.order_by('classroom__grade_level', 'classroom__name', 'last_name')
-    classrooms = Classroom.objects.filter(is_active=True)
+    students = list(students_qs.order_by('classroom__grade_level', 'classroom__name', 'last_name'))
+
+    # Har bir o'quvchining shaxsiy vazifalar ko'rsatkichlari (qildi, qilmadi, kech qoldi)
+    for st in students:
+        st_tasks = StudentAssignment.objects.filter(student=st)
+        st.total_tasks_count = st_tasks.count()
+        st.done_count = st_tasks.filter(status__in=['completed', 'approved', 'submitted', 'under_review']).count()
+        st.not_done_count = st_tasks.filter(status='not_started', assignment__due_date__gte=now).count()
+        st.overdue_count = st_tasks.filter(Q(status='overdue') | Q(status='not_started', assignment__due_date__lt=now)).count()
+
+    classrooms = Classroom.objects.filter(is_active=True).order_by('grade_level', 'name')
 
     if request.method == 'POST':
         action = request.POST.get('action')
@@ -261,6 +311,8 @@ def students_view(request):
         'students': students,
         'classrooms': classrooms,
         'selected_class': class_id,
+        'selected_classroom': selected_classroom,
+        'class_metrics': class_metrics,
         'search_query': query,
         'form': form
     })

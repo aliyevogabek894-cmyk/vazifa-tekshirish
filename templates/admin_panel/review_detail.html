@@ -13,34 +13,22 @@
             <i data-lucide="arrow-left" class="w-4 h-4 mr-1.5"></i>
             Topshiriqlar ro‘yxatiga qaytish
         </a>
-
-        {% if is_read_only %}
-        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-700">
-            <i data-lucide="eye" class="w-3.5 h-3.5 text-amber-600"></i>
-            Administrator: Ko‘rish rejimi
-        </span>
-        {% endif %}
     </div>
-
-    {% if is_read_only %}
-    <!-- Read Only Banner -->
-    <div class="p-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/70 rounded-2xl flex items-start gap-3 shadow-xs">
-        <i data-lucide="shield-alert" class="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5"></i>
-        <div class="text-xs sm:text-sm text-amber-900 dark:text-amber-200 leading-relaxed">
-            <strong>Administrator diqqatiga:</strong> Ushbu sahifada siz o‘quvchi javoblari va o‘qituvchi bahosini <u>faqat ko‘rish</u> huquqiga egasiz. Baholash va xulosa berish vakolati biriktirilgan fanning o‘qituvchisiga tegishli.
-        </div>
-    </div>
-    {% endif %}
 
     <!-- Task Info Banner -->
     <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 border border-gray-200 dark:border-gray-700 shadow-xs space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 dark:border-gray-700 pb-4">
             <div>
-                <span class="text-xs font-bold text-gray-400 uppercase tracking-wider block">O‘quvchi</span>
+                <span class="text-xs font-bold text-gray-400 uppercase tracking-wider block">O‘quvchi ma’lumotlari</span>
                 <h2 class="text-xl font-black text-gray-900 dark:text-white">{{ task.student.full_name }}</h2>
-                <div class="flex items-center gap-3 text-xs text-gray-500 mt-1">
-                    <span>Sinf: <strong>{{ task.student.classroom.name|default:"-" }}</strong></span>
-                    <span>Tel: <strong class="font-mono">{{ task.student.phone_number }}</strong></span>
+                <div class="flex flex-wrap items-center gap-3 text-xs text-gray-500 mt-2">
+                    <span class="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-brand-700 dark:text-brand-300 font-bold">
+                        Sinf: {{ task.student.classroom.name|default:"-" }}
+                    </span>
+                    <span class="inline-flex items-center px-3 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-mono font-bold border border-emerald-200 dark:border-emerald-800/50">
+                        <i data-lucide="phone" class="w-3.5 h-3.5 mr-1.5 text-emerald-600"></i>
+                        {{ task.student.phone_number }}
+                    </span>
                 </div>
             </div>
             <div class="text-right">
