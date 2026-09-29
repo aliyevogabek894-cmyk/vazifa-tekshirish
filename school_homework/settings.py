@@ -8,12 +8,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-school-homework-system-secret-key-2026'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-if os.environ.get('RENDER') or os.environ.get('RAILWAY_ENVIRONMENT'):
-    DEBUG = os.environ.get('DJANGO_DEBUG', 'False').lower() in ('true', '1')
-else:
-    DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('true', '1')
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('true', '1')
 
 ALLOWED_HOSTS = ['*']
+
+WHITENOISE_USE_FINDERS = True
+
 
 # Application definition
 INSTALLED_APPS = [
