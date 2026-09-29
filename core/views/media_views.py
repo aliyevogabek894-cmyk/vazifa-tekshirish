@@ -109,4 +109,5 @@ def secure_assignment_media_view(request, assignment_id):
 
     response = FileResponse(file_obj, content_type=content_type)
     response['Content-Disposition'] = f'inline; filename="{filename}"'
+    response['Cache-Control'] = 'private, max-age=86400'
     return response

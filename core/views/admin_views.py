@@ -43,16 +43,25 @@ def admin_dashboard(request):
         'data': [approved_count, completed_count - approved_count, pending_review_count, needs_work_count, not_started_count]
     }
 
-    # Chart 2: Completion rate by classroom
+    # Chart 2: Completion rate by classroom (optimized single query)
     class_labels = []
     class_completion_rates = []
-    for c in Classroom.objects.filter(is_active=True)[:8]:
-        c_tasks = StudentAssignment.objects.filter(student__classroom=c)
-        c_total = c_tasks.count()
-        c_done = c_tasks.filter(status__in=['completed', 'approved']).count()
-        rate = round((c_done / c_total * 100), 1) if c_total > 0 else 0
-        class_labels.append(c.name)
-        class_completion_rates.append(rate)
+    active_classes = list(Classroom.objects.filter(is_active=True)[:8])
+    if active_classes:
+        class_stats = StudentAssignment.objects.filter(
+            student__classroom__in=active_classes
+        ).values('student__classroom').annotate(
+            total=Count('id'),
+            done=Count('id', filter=Q(status__in=['completed', 'approved']))
+        )
+        stats_map = {s['student__classroom']: s for s in class_stats}
+        for c in active_classes:
+            c_data = stats_map.get(c.id, {'total': 0, 'done': 0})
+            c_total = c_data['total']
+            c_done = c_data['done']
+            rate = round((c_done / c_total * 100), 1) if c_total > 0 else 0
+            class_labels.append(c.name)
+            class_completion_rates.append(rate)
 
     context = {
         'total_classrooms': total_classrooms,

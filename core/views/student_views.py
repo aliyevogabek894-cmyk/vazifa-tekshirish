@@ -2,6 +2,7 @@ import os
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.utils import timezone
+from django.db.models import Count
 from django.core.exceptions import PermissionDenied
 from django.http import Http404
 
@@ -17,11 +18,22 @@ from core.utils.audit import log_action
 def student_dashboard(request):
     student = request.user.student_profile
 
-    # Auto sync any active assignments for this student's classroom
+    # Auto sync any active assignments for this student's classroom (optimized bulk check)
     if student.classroom:
-        classroom_assignments = Assignment.objects.filter(classrooms=student.classroom, is_active=True)
-        for ass in classroom_assignments:
-            StudentAssignment.objects.get_or_create(assignment=ass, student=student)
+        existing_assignment_ids = set(
+            StudentAssignment.objects.filter(student=student).values_list('assignment_id', flat=True)
+        )
+        missing_assignments = Assignment.objects.filter(
+            classrooms=student.classroom,
+            is_active=True
+        ).exclude(id__in=existing_assignment_ids)
+        
+        if missing_assignments.exists():
+            new_tasks = [
+                StudentAssignment(assignment=ass, student=student)
+                for ass in missing_assignments
+            ]
+            StudentAssignment.objects.bulk_create(new_tasks, ignore_conflicts=True)
 
     # Base tasks queryset - strictly limited to CURRENT student only!
     tasks_qs = StudentAssignment.objects.filter(student=student).select_related(
@@ -50,18 +62,20 @@ def student_dashboard(request):
     else:
         tasks = all_tasks
 
-    # Calculate aggregate classroom progress for each assignment (anonymized!)
+    # Calculate aggregate classroom progress for each assignment in a single optimized query
     tasks_with_stats = []
     total_class_students = student.classroom.students.filter(is_active=True).count() if student.classroom else 1
 
-    for t in tasks:
-        # Count how many students in the same class completed this assignment
-        class_completed_count = StudentAssignment.objects.filter(
-            assignment=t.assignment,
+    completion_counts = {}
+    if student.classroom:
+        stats_qs = StudentAssignment.objects.filter(
             student__classroom=student.classroom,
             status__in=['completed', 'submitted', 'under_review', 'approved']
-        ).count()
+        ).values('assignment_id').annotate(total=Count('id'))
+        completion_counts = {item['assignment_id']: item['total'] for item in stats_qs}
 
+    for t in tasks:
+        class_completed_count = completion_counts.get(t.assignment_id, 0)
         tasks_with_stats.append({
             'item': t,
             'class_completed_count': class_completed_count,
