@@ -10,6 +10,10 @@
                     </div>
                     <span class="hidden sm:inline">Maktab Nazorati <span class="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 ml-1">Admin</span></span>
                 </a>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold {% if is_postgres %}bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700{% else %}bg-amber-100 text-amber-800 border border-amber-300{% endif %}" title="Amaldagi ma'lumotlar bazasi">
+                    <span class="w-2 h-2 rounded-full {% if is_postgres %}bg-emerald-500 animate-pulse{% else %}bg-amber-500{% endif %}"></span>
+                    {{ active_db_name }}
+                </span>
                 {% else %}
                 <a href="{% url 'student_dashboard' %}" class="flex items-center space-x-3 text-brand-600 dark:text-brand-500 font-bold text-lg">
                     <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-600 text-white flex items-center justify-center shadow-md">

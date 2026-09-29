@@ -1,3 +1,6 @@
+from django.db import connection
+
+
 def theme_and_user_processor(request):
     """
     Globally provides current user profile info and role to all templates.
@@ -9,6 +12,8 @@ def theme_and_user_processor(request):
         'is_teacher': False,
         'student_profile': None,
         'admin_profile': None,
+        'active_db_name': 'Neon PostgreSQL' if connection.vendor == 'postgresql' else 'SQLite',
+        'is_postgres': connection.vendor == 'postgresql',
     }
     if request.user.is_authenticated:
         if hasattr(request.user, 'admin_profile'):
@@ -24,3 +29,4 @@ def theme_and_user_processor(request):
         elif hasattr(request.user, 'student_profile'):
             context['student_profile'] = request.user.student_profile
     return context
+
