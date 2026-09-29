@@ -9,6 +9,7 @@ urlpatterns = [
     path('verify-otp/', auth_views.verify_otp_view, name='verify_otp'),
     path('register-profile/', auth_views.register_profile_view, name='register_profile'),
     path('admin-login/', auth_views.admin_login_view, name='admin_login'),
+    path('admin-panel/login/', auth_views.admin_login_view, name='admin_panel_login'),
     path('logout/', auth_views.logout_view, name='logout'),
 
     # Student portal
